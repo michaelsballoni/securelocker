@@ -135,6 +135,29 @@ std::string securelib::UniqueStr()
 	static std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
 	std::stringstream stream;
+	// https://github.com/graeme-hill/crossguid
 	stream << xg::newGuid() << rand() << time(nullptr);
-	return Hash(Encrypt(stream.str(), stream.str()));
+	return Hash(stream.str());
+}
+
+std::vector<uint8_t> securelib::LoadFile(const std::wstring& path)
+{
+	std::ifstream file(path, std::ios::binary);
+	if (!file)
+		return std::vector<uint8_t>();
+
+	std::vector<char> chars(std::istreambuf_iterator<char>(file), {});
+
+	std::vector<uint8_t> bytes;
+	bytes.resize(chars.size());
+	memcpy(bytes.data(), chars.data(), bytes.size());
+	return bytes;
+}
+
+void securelib::SaveFile(const std::wstring& path, const std::vector<uint8_t>& bytes)
+{
+	std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::trunc);
+	if (!file)
+		throw new std::runtime_error("Saving file failed");
+	file.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
 }

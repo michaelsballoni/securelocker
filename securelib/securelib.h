@@ -16,4 +16,7 @@ namespace securelib
 	std::string VecToStr(const std::vector<unsigned char>& data);
 
 	std::string UniqueStr();
+
+	std::vector<uint8_t> LoadFile(const std::wstring& path);
+	void SaveFile(const std::wstring& path, const std::vector<uint8_t>& bytes);
 }

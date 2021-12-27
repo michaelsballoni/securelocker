@@ -6,6 +6,8 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
+namespace fs = std::filesystem;
+
 template<typename T>
 bool AreVecsEqual(const std::vector<T>& vec1, const std::vector<T>& vec2)
 {
@@ -89,6 +91,37 @@ namespace securelib
 			Logger::WriteMessage(("unique2: " + unique2 + "\n").c_str());
 
 			Assert::IsTrue(unique1 != unique2);
+		}
+
+		TEST_METHOD(TestFiles)
+		{
+			std::wstring filePath = fs::path(__FILE__).parent_path().append("test.dat");
+			if (fs::exists(filePath))
+				fs::remove(filePath);
+
+			std::vector<uint8_t> loaded = LoadFile(filePath);
+			Assert::IsTrue(loaded.empty());
+
+			std::vector<uint8_t> saved = StrToVec("foobar");
+			SaveFile(filePath, saved);
+
+			saved = StrToVec("foobar");
+			SaveFile(filePath, saved);
+
+			std::string loadedStr = VecToStr(LoadFile(filePath));
+			Assert::AreEqual(std::string("foobar"), loadedStr);
+
+			std::string loadedStr2 = VecToStr(LoadFile(filePath));
+			Assert::AreEqual(std::string("foobar"), loadedStr2);
+
+			std::vector<uint8_t> saved2 = StrToVec("blet monkey");
+			SaveFile(filePath, saved2);
+
+			std::string loadedStr3 = VecToStr(LoadFile(filePath));
+			Assert::AreEqual(std::string("blet monkey"), loadedStr3);
+
+			std::string loadedStr4 = VecToStr(LoadFile(filePath));
+			Assert::AreEqual(std::string("blet monkey"), loadedStr4);
 		}
 	};
 }
