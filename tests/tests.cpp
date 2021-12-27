@@ -6,6 +6,19 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
+template<typename T>
+bool AreVecsEqual(const std::vector<T>& vec1, const std::vector<T>& vec2)
+{
+	if (vec1.size() != vec2.size())
+		return false;
+	for (size_t v = 0; v < vec1.size(); ++v)
+	{
+		if (vec1[v] != vec2[v])
+			return false;
+	}
+	return true;
+}
+
 namespace securelib
 {
 	TEST_CLASS(LibTests)
@@ -13,18 +26,18 @@ namespace securelib
 	public:
 		TEST_METHOD(TestHash)
 		{
-			std::string hash1 = Hash(L"foo");
+			std::string hash1 = Hash("foo");
 			Logger::WriteMessage(("hash1: " + hash1 + "\n").c_str());
 
-			std::string hash2 = Hash(L"bar");
+			std::string hash2 = Hash("bar");
 			Logger::WriteMessage(("hash2: " + hash2 + "\n").c_str());
 
 			Assert::IsTrue(hash1 != hash2);
 
-			std::string longHash1 = Hash(L"this is really quite a lot of text, more than any reasonable hash algorithm would get tripped up by, some");
+			std::string longHash1 = Hash("this is really quite a lot of text, more than any reasonable hash algorithm would get tripped up by, some");
 			Logger::WriteMessage(("longHash1: " + longHash1 + "\n").c_str());
 
-			std::string longHash2 = Hash(L"again, there's not reason why a completely reasonable hash algorithm would have issue with text this long");
+			std::string longHash2 = Hash("again, there's not reason why a completely reasonable hash algorithm would have issue with text this long");
 			Logger::WriteMessage(("longHash2: " + longHash2 + "\n").c_str());
 
 			Assert::IsTrue(longHash1 != longHash2);
@@ -34,19 +47,36 @@ namespace securelib
 		{
 			{
 				std::vector<unsigned char> plain{ 1, 2 ,3, 4 };
-				auto enc = Encrypt(plain, L"test");
-				auto dec = Decrypt(enc, L"test");
-				// FORNOW - Debug from here
+				std::string key = "test";
+				auto enc = Encrypt(plain, key);
+				auto dec = Decrypt(enc, key);
+				Assert::IsTrue(AreVecsEqual<uint8_t>(plain, dec));
 			}
 
 			{
-				auto enc = Encrypt(L"foobar", L"blet monkey");
-				Logger::WriteMessage((L"enc: " + enc + L"\n").c_str());
+				std::string key = "blet monkey";
+				std::string plain = "foobar";
 
-				auto dec = Decrypt(enc, L"blet monkey");
-				Logger::WriteMessage((L"dec: " + dec + L"\n").c_str());
+				auto enc = Encrypt(plain, key);
+				Logger::WriteMessage(("enc: " + enc + "\n").c_str());
 
-				Assert::AreEqual(std::wstring(L"foobar"), dec);
+				auto dec = Decrypt(enc, key);
+				Logger::WriteMessage(("dec: " + dec + "\n").c_str());
+
+				Assert::AreEqual(plain, dec);
+			}
+
+			{
+				std::string key = "so much longer that only 56 bytes, it's hard to imagine how completely beyond 56 bytes this is, but it's really quite a ways past it";
+				std::string plain = "foobar blet monkey a key that's way too long that it exceeds the block size so it gets truncated but that's still okay because it's self-consistent";
+
+				auto enc = Encrypt(plain, key);
+				Logger::WriteMessage(("enc: " + enc + "\n").c_str());
+
+				auto dec = Decrypt(enc, key);
+				Logger::WriteMessage(("dec: " + dec + "\n").c_str());
+
+				Assert::AreEqual(plain, dec);
 			}
 		}
 	};
