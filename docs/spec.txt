@@ -1,27 +1,24 @@
 seclock <verb> <path to file>
-verbs: put, get, free
+verbs: put, get, dir, delete
 prompts for login: room and key
-one file is involved, could be files.zip
-	user is responsible for packing all they want stored into the one file
-	user can use a password-protected ZIP file for better security
 connects to server and negotiates using proprietary hash+nonce-based challenge-response
 	server responds to initial request with 401 and header with new GUID, stored in session in server
 	client responds with room and hash of key and GUID
 	server does the same hash, if match then proceed, otherwise drop connection
 does the deed
-	put: encrypts files.zip using the key and transmits it
-	get: receives payload, decrypts to files.zip
-	free: removes the files and leger entry from the server
+	put: encrypts file and transmits it to the locker
+	get: receives payload, decrypts, server removes from locker preventing file sharing
+	dir: list files in the locker
+	delete: removes the files and leger entry from the server
 
 seclockd <port>
 prompts for admin password
 opens and decrypts leger file of registrations, rooms and keys
 fields commands at cmd line
-	verbs: alloc, free
-	reserve: generates a new leger entry with a new key for the room
-	checkin: 
+	verbs: checkin, checkout
+	checkin: generates a new leger entry with a new key for the room
 	checkout: delete's room's directory, erases leger entry
 fields connections over HTTP
 	negotiates authentication with client
-	serves clients verbs and paths
+	serves client verbs and paths
 files are encrypted by client and stored encrypted on server

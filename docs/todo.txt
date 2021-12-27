@@ -8,9 +8,5 @@ wrapper library for accessing these low level functions
 
 unit tests that prove out the wrapper library
 
-httplite + session variables
-	needed for authentication
-	wstring->wstring maintained in the socket connection handler
-	passed to handler function by non-const ref
 leger
 log
