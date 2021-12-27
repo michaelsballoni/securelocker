@@ -79,5 +79,16 @@ namespace securelib
 				Assert::AreEqual(plain, dec);
 			}
 		}
+
+		TEST_METHOD(TestUnique)
+		{
+			std::string unique1 = UniqueStr();
+			Logger::WriteMessage(("unique1: " + unique1 + "\n").c_str());
+
+			std::string unique2 = UniqueStr();
+			Logger::WriteMessage(("unique2: " + unique2 + "\n").c_str());
+
+			Assert::IsTrue(unique1 != unique2);
+		}
 	};
 }

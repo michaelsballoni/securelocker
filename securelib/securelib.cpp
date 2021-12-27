@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "securelib.h"
 
-#include "../../SHA256/include/SHA256.h"
-
+#include "SHA256.h"
 #include "Blowfish.h"
+#include "crossguid/guid.hpp"
 
 std::string securelib::Hash(const uint8_t* data, uint32_t len)
 {
@@ -132,5 +132,9 @@ std::string securelib::VecToStr(const std::vector<unsigned char>& data)
 
 std::string securelib::UniqueStr()
 {
-	return "blet monkey"; // FORNOW: GUID + rand() + local time + algorithmic salt
+	static std::mutex mutex;
+    std::lock_guard<std::mutex> lock(mutex);
+	std::stringstream stream;
+	stream << xg::newGuid() << rand() << time(nullptr);
+	return Hash(Encrypt(stream.str(), stream.str()));
 }
