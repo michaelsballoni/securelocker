@@ -1,23 +1,24 @@
 seclock <verb> <path to file>
 verbs: put, get, dir, delete
 prompts for login: room and key
-connects to server and negotiates using proprietary hash+nonce-based challenge-response
+connects to server and negotiates using hash+nonce-based challenge-response
 	server responds to initial request with 401 and header with new GUID, stored in session in server
 	client responds with room and hash of key and GUID
-	server does the same hash, if match then proceed, otherwise drop connection
+	server does the same hash with its copy of the key, if match then proceed, otherwise drop connection
 does the deed
-	put: encrypts file and transmits it to the locker
+	put: encrypts file and transmits it to the locker; just filename, flat directory
 	get: receives payload, decrypts, server removes from locker preventing file sharing
-	dir: list files in the locker
+	dir: list files in the locker; flat
 	delete: removes the files and leger entry from the server
 
 seclockd <port>
 prompts for admin password
 opens and decrypts leger file of registrations, rooms and keys
 fields commands at cmd line
-	verbs: checkin, checkout
-	checkin: generates a new leger entry with a new key for the room
-	checkout: delete's room's directory, erases leger entry
+	verbs: reserve, checkin, checkout
+	reserve: you can't checkin if you did not first, out of band, register
+	checkin: update client registration with room assignment and new key
+	checkout: prompts if room directory isn't empty, deletes room directory, erases leger entry
 fields connections over HTTP
 	negotiates authentication with client
 	serves client verbs and paths

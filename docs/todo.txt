@@ -1,12 +1,18 @@
-lib:
-blowfish: memory -> memory
-sha256: memory -> string
-GUID->string
-	UuidCreate
-	UuidToString
-wrapper library for accessing these low level functions
-
-unit tests that prove out the wrapper library
-
 leger
+	check for \t's in provided names
+	add unit tests
+	
+server
+	move code to class
+	add unit tests
+
+client
+	develop as a class for unit tests
+
+integrate with apps and unit tests
+
 log
+
+document
+
+write article

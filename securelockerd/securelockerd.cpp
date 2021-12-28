@@ -1,16 +1,17 @@
 #include "Leger.h"
-
 #include "HttpServer.h"
 
 #include <conio.h>
-
 #include <iostream>
+
+#pragma comment(lib, "httplite")
+#pragma comment(lib, "securelib")
 
 using namespace httplite;
 
 Response HandleRequests(const Request& request);
 
-securelocker::Leger leger;
+std::shared_ptr<securelib::lockerleger> leger;
 
 int main(int argc, char* argv[])
 {
@@ -23,11 +24,10 @@ int main(int argc, char* argv[])
 
 		std::wstring pwd;
 		char c;
-		while ((c = getch()) != '\n')
+		while ((c = _getch()) != '\n')
 			pwd += c;
 
-		leger.load(pwd);
-
+		leger = std::make_shared<securelib::lockerleger>(pwd, L"leger.dat");
 
 		int port = atoi(argv[1]);
 		if (port <= 0 || port > USHRT_MAX) {
@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 
 		while (true)
 		{
-			printf("\nquit, reserve <name>, checkin <name>, checkout <name>");
+			printf("\nquit, register <name>, checkin <name>, checkout <name>");
 			printf("\n> ");
 			std::wstring line;
 			std::getline(std::wcin, line);
@@ -67,18 +67,25 @@ int main(int argc, char* argv[])
 			std::wstring verb = line.substr(0, spaceIndex);
 			std::wstring noun = line.substr(spaceIndex + 1);
 
-			if (verb == L"checkin")
+			if (verb == L"register")
 			{
 				// FORNOW
 				// take name
 				// leger.createEntry
 				// print room # and key to console for giving to client out of band
 			}
+			else if (verb == L"checkin")
+			{
+				// FORNOW
+				// take name
+				// leger.checkin
+				// print room # and key to console for giving to client out of band
+			}
 			else if (verb == L"checkout")
 			{
 				// FORNOW
-				// take name and room #
-				// leger.removeEntry
+				// take name
+				// leger.checkout
 			}
 		}
 
@@ -99,5 +106,7 @@ int main(int argc, char* argv[])
 Response HandleRequests(const Request& request)
 {
 	// FORNOW
-	printf("%s %S\n", request.Path, Join(request.Path, L"/"));
+	printf("%s %S\n", request.Verb.c_str(), Join(request.Path, L"/").c_str());
+	Response response;
+	return response;
 }
