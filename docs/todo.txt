@@ -1,7 +1,11 @@
 leger
-	check for \t's in provided names
 	add unit tests
-	
+	add client's file I/O
+
+files
+	add file system support for client files
+	add unit tests
+
 server
 	move code to class
 	add unit tests
@@ -10,6 +14,8 @@ client
 	develop as a class for unit tests
 
 integrate with apps and unit tests
+
+outstanding:
 
 log
 

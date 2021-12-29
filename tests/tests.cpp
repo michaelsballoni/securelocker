@@ -8,19 +8,6 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace fs = std::filesystem;
 
-template<typename T>
-bool AreVecsEqual(const std::vector<T>& vec1, const std::vector<T>& vec2)
-{
-	if (vec1.size() != vec2.size())
-		return false;
-	for (size_t v = 0; v < vec1.size(); ++v)
-	{
-		if (vec1[v] != vec2[v])
-			return false;
-	}
-	return true;
-}
-
 namespace securelib
 {
 	TEST_CLASS(LibTests)
@@ -52,7 +39,7 @@ namespace securelib
 				std::string key = "test";
 				auto enc = Encrypt(plain, key);
 				auto dec = Decrypt(enc, key);
-				Assert::IsTrue(AreVecsEqual<uint8_t>(plain, dec));
+				Assert::IsTrue(httplite::AreVecsEqual<uint8_t>(plain, dec));
 			}
 
 			{

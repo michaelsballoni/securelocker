@@ -1,16 +1,16 @@
 #pragma once
 
-#include <list>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <vector>
 
 namespace securelib
 {
 	class lockerleger
 	{
 	public: // interface
-		lockerleger(const std::wstring& pwd, const std::wstring& legerFilePath);
+		lockerleger(const std::wstring& password, const std::wstring& legerFilePath);
 		void load();
 
 		// takes name and stashes it into leger with no room or key
@@ -37,6 +37,10 @@ namespace securelib
 			uint32_t room;
 			std::string key;
 		};
+		const std::vector<std::shared_ptr<legerentry>>& entries() const
+		{
+			return m_entries;
+		}
 
 	private: // implementation
 		void save();
@@ -46,11 +50,11 @@ namespace securelib
 		uint32_t getAvailableRoom() const;
 
 	private: // state
-		std::list<std::shared_ptr<legerentry>> m_entries;
+		std::vector<std::shared_ptr<legerentry>> m_entries;
 
 		mutable std::mutex m_mutex;
 
-		std::string m_pwd;
+		std::string m_password;
 		std::wstring m_legerFilePath;
 	};
 }

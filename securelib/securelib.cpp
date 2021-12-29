@@ -1,10 +1,6 @@
 #include "pch.h"
 #include "securelib.h"
 
-#include "SHA256.h"
-#include "Blowfish.h"
-#include "crossguid/guid.hpp"
-
 std::string securelib::Hash(const uint8_t* data, uint32_t len)
 {
 	// https://github.com/System-Glitch/SHA256
@@ -80,20 +76,27 @@ inline uint32_t RemoveLengthFromVector(std::vector<uint8_t>& vec)
 std::vector<uint8_t> securelib::Encrypt(std::vector<uint8_t> data, const std::string& key)
 {
 	uint32_t originalInputSize = static_cast<uint32_t>(data.size());
-	PadVectorTo8ths(data);
+	if (data.size() > 0)
+	{
+		PadVectorTo8ths(data);
 
-	auto keyVec = StrToVec(key);
-	CBlowFish enc(keyVec.data(), keyVec.size());
+		auto keyVec = StrToVec(key);
+		CBlowFish enc(keyVec.data(), keyVec.size());
 
-	enc.Encrypt(data.data(), data.size());
-
+		enc.Encrypt(data.data(), data.size());
+	}
 	AddLengthToVector(data, originalInputSize);
 	return data;
 }
 
 std::vector<uint8_t> securelib::Decrypt(std::vector<uint8_t> data, const std::string& key)
 {
+	if (data.size() < sizeof(uint32_t))
+		return std::vector<uint8_t>();
+
 	uint32_t originalInputSize = RemoveLengthFromVector(data);
+	if (originalInputSize == 0)
+		return data;
 
 	auto keyVec = StrToVec(key);
 	CBlowFish dec(keyVec.data(), keyVec.size());
