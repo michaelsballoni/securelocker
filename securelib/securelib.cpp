@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "securelib.h"
 
+namespace fs = std::filesystem;
+
 std::string securelib::Hash(const uint8_t* data, uint32_t len)
 {
 	// https://github.com/System-Glitch/SHA256
@@ -159,6 +161,7 @@ std::vector<uint8_t> securelib::LoadFile(const std::wstring& path)
 
 void securelib::SaveFile(const std::wstring& path, const std::vector<uint8_t>& bytes)
 {
+	fs::create_directories(fs::path(path).parent_path());
 	std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::trunc);
 	if (!file)
 		throw new std::runtime_error("Saving file failed");
