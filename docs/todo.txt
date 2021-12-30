@@ -1,24 +1,12 @@
-leger
-	add unit tests
-	add client's file I/O
-
-files
-	add file system support for client files
-	add unit tests
-
 server
-	move code to class
-	add unit tests
+	add calls into legerfile for checkin and checkout
+	implement web server
 
-client
-	develop as a class for unit tests
+get client and server playing nice together
 
-integrate with apps and unit tests
+logs
+	server should log everything it does
 
-outstanding:
-
-log
-
-document
+document code
 
 write article
