@@ -11,6 +11,7 @@ namespace securelib
 		std::vector<uint8_t> get(const std::wstring& filename);
 		void del(const std::wstring& filename);
 		std::wstring dir();
+		void checkout();
 
 	private:
 		std::wstring getFilePath(const std::wstring& filename) const;

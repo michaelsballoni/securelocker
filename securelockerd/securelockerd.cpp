@@ -1,19 +1,25 @@
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // toWideString / toNarrowString
 
 #include "lockerleger.h"
+#include "lockerfiles.h"
+#include "lockerhttp.h"
+#include "securelib.h"
+
+#include "Core.h"
 #include "HttpServer.h"
 
+#include <atomic>
 #include <conio.h> // _getch()
+#include <filesystem>
 #include <iostream>
 
 #pragma comment(lib, "httplite")
 #pragma comment(lib, "securelib")
 
 using namespace httplite;
+using namespace securelib;
 
-Response HandleRequests(const Request& request);
-
-std::shared_ptr<securelib::lockerleger> leger;
+namespace fs = std::filesystem;
 
 int wmain(int argc, wchar_t* argv[])
 {
@@ -21,6 +27,9 @@ int wmain(int argc, wchar_t* argv[])
 	try
 #endif
 	{
+		srand(time(nullptr) % RAND_MAX);
+		std::atomic<int> lockerAuthNonce = rand();
+
 		if (argc != 3) {
 			printf("Usage: securelockerd <port> <leger file path>\n");
 			return 0;
@@ -28,24 +37,31 @@ int wmain(int argc, wchar_t* argv[])
 
 		int port = _wtoi(argv[1]);
 		if (port <= 0 || port > USHRT_MAX) {
-			printf("ERROR: Invalid port number: %s\n", argv[1]);
+			printf("ERROR: Invalid port number: %S\n", argv[1]);
 			return 1;
 		}
 
-		std::wstring pwd;
+		std::wstring password;
 		char c;
 		while ((c = _getch()) != '\n')
 		{
-			pwd += c;
+			password += c;
 			printf("*");
 		}
 
 		std::wstring legerFilePath = argv[2];
-		leger = std::make_shared<securelib::lockerleger>(pwd, legerFilePath);
+		lockerleger leger(password, legerFilePath);
+		std::wstring lockerRootDir = fs::path(legerFilePath).parent_path().wstring();
 
 		printf("Setting up serving of port %d...", port);
-		HttpServer httpServer(static_cast<uint16_t>(port), HandleRequests);
-		httpServer.StartServing();
+		lockerserver server
+		(
+			static_cast<uint16_t>(port), 
+			leger, 
+			lockerRootDir, 
+			lockerAuthNonce
+		);
+		server.start();
 		printf("done!\n");
 
 		while (true)
@@ -81,20 +97,31 @@ int wmain(int argc, wchar_t* argv[])
 
 				if (verb == L"register")
 				{
-					leger->registerName(name);
+					leger.registerName(name);
 					printf("\nClient registered.");
 				}
 				else if (verb == L"checkin")
 				{
 					uint32_t room;
 					std::string key;
-					leger->checkin(name, room, key);
+					leger.checkin(name, room, key);
 					printf("\nClient checked in: Room: %d - Key: %s\n\n", 
 						  int(room), key.c_str());
 				}
 				else if (verb == L"checkout")
 				{
-					leger->checkout(name);
+					uint32_t room = 0;
+					leger.checkout(name, room);
+					lockerfiles files(lockerRootDir, room);
+					if (!files.dir().empty())
+					{
+						printf("Client files directory is not empty.  Proceed?  (y)es or (n)no: ");
+						std::string response;
+						std::getline(std::cin, response);
+						if (response.empty() || toupper(response[0]) == 'N')
+							continue;
+					}
+					files.checkout();
 					printf("\nClient checked out.");
 				}
 			}
@@ -108,7 +135,7 @@ int wmain(int argc, wchar_t* argv[])
 		}
 
 		printf("\nShutting down...\n");
-		httpServer.StopServing();
+		server.stop();
 	}
 #ifndef _DEBUG
 	catch (const std::exception& exp)
@@ -119,12 +146,4 @@ int wmain(int argc, wchar_t* argv[])
 #endif
 	printf("All done.\n");
 	return 0;
-}
-
-Response HandleRequests(const Request& request)
-{
-	// FORNOW
-	printf("%s %S\n", request.Verb.c_str(), Join(request.Path, L"/").c_str());
-	Response response;
-	return response;
 }

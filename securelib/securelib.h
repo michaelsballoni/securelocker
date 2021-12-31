@@ -3,7 +3,7 @@
 
 namespace securelib
 {
-	std::string Hash(const uint8_t* data, uint32_t len);
+	std::string Hash(const uint8_t* data, size_t len);
 	std::string Hash(const std::string& str);
 
 	std::vector<uint8_t> Encrypt(std::vector<uint8_t> data, const std::string& key);

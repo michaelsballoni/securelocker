@@ -3,7 +3,7 @@
 
 namespace fs = std::filesystem;
 
-std::string securelib::Hash(const uint8_t* data, uint32_t len)
+std::string securelib::Hash(const uint8_t* data, size_t len)
 {
 	// https://github.com/System-Glitch/SHA256
 	SHA256 hasher;
@@ -18,7 +18,7 @@ std::string securelib::Hash(const uint8_t* data, uint32_t len)
 
 std::string securelib::Hash(const std::string& str)
 {
-	return Hash(reinterpret_cast<const uint8_t*>(str.c_str()), static_cast<uint32_t>(str.size()));
+	return Hash(reinterpret_cast<const uint8_t*>(str.c_str()), str.size());
 }
 
 inline void PadVectorTo8ths(std::vector<uint8_t>& vec)

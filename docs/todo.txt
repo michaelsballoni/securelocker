@@ -1,12 +1,5 @@
-server
-	add calls into legerfile for checkin and checkout
-	implement web server
+document code, adding lots of debug printf's
 
 get client and server playing nice together
-
-logs
-	server should log everything it does
-
-document code
 
 write article

@@ -46,6 +46,12 @@ namespace securelib
 		return dirResults;
 	}
 
+	void lockerfiles::checkout()
+	{
+		if (fs::exists(m_dirPath))
+			fs::remove_all(m_dirPath);
+	}
+
 	std::wstring lockerfiles::getFilePath(const std::wstring& filename) const
 	{
 		return m_dirPath + filename;

@@ -74,12 +74,10 @@ namespace securelib
 		entry->room = room;
 		entry->key = key;
 
-		// FORNOW - Create user's files directory
-
 		save();
 	}
 
-	void lockerleger::checkout(const std::wstring& name)
+	void lockerleger::checkout(const std::wstring& name, uint32_t& room)
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 		bool found = false;
@@ -88,6 +86,7 @@ namespace securelib
 			if ((*it)->name == name)
 			{
 				found = true;
+				room = (*it)->room;
 				m_entries.erase(it);
 				break;
 			}
@@ -98,8 +97,19 @@ namespace securelib
 		save();
 	}
 
+	std::string lockerleger::getRoomKey(uint32_t room)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		for (auto it = m_entries.begin(); it != m_entries.end(); ++it)
+		{
+			if ((*it)->room == room)
+				return (*it)->key;
+		}
+		throw std::runtime_error("Room not found");
+	}
+
 	// NOTE: Does not lock as mutex is not recursive, 
-	//		 and only called public functions that lock
+	//		 and only called by public functions that lock
 	void lockerleger::save()
 	{
 		std::wstring str;

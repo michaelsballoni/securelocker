@@ -56,7 +56,8 @@ namespace securelib
 			{
 				lockerleger leger(L"foobar", filePath);
 				leger.load();
-				leger.checkout(L"Blet Monkey");
+				uint32_t roomOut = 0;
+				leger.checkout(L"Blet Monkey", roomOut);
 				Assert::AreEqual(size_t(0), leger.entries().size());
 			}
 

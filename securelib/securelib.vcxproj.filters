@@ -33,6 +33,12 @@
     <ClInclude Include="lockerfiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="lockerlog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lockerhttp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="securelib.cpp">
@@ -54,6 +60,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="lockerfiles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lockerhttp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

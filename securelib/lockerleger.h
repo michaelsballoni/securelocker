@@ -22,8 +22,11 @@ namespace securelib
 		// new key created from hash of GUID and password and rand() and date/time
 		void checkin(const std::wstring& name, uint32_t& room, std::string& key);
 
-		// matches name and removes entry 
-		void checkout(const std::wstring& name);
+		// matches name and removes entry, returning the room number
+		void checkout(const std::wstring& name, uint32_t& room);
+
+		// get the key for a given room
+		std::string getRoomKey(uint32_t room);
 
 		struct legerentry
 		{
