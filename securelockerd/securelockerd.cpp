@@ -22,9 +22,7 @@ namespace fs = std::filesystem;
 
 int wmain(int argc, wchar_t* argv[])
 {
-#ifndef _DEBUG
 	try
-#endif
 	{
 		srand(time(nullptr) % RAND_MAX);
 
@@ -39,22 +37,28 @@ int wmain(int argc, wchar_t* argv[])
 			return 1;
 		}
 
+		printf("Leger Access Password: ");
 		std::wstring password;
-		char c;
-		while ((c = _getch()) != '\n')
+		while (true)
 		{
+			char c = _getch();
+			if (c == '\r' || c == '\n')
+				break;
 			password += c;
 			printf("*");
 		}
+		printf("\n");
 
 		setLogFile(stdout);
 #ifdef _DEBUG
 		setLogTrace(true);
 #endif
+		SocketUse useSockets;
 
 		std::wstring lockerRootDir = argv[2];
 		std::wstring legerFilePath = fs::path(lockerRootDir).append("leger.dat");
 		lockerleger leger(password, legerFilePath);
+		leger.load();
 
 		printf("Serving port %d...\n", port);
 		lockerserver server
@@ -65,14 +69,12 @@ int wmain(int argc, wchar_t* argv[])
 		);
 		server.start();
 
-		printf("Ready for your commands...\n");
+		printf("\nReady for your commands...\n");
 		while (true)
 		{
-#ifndef _DEBUG
 			try
-#endif
 			{
-				printf("\nquit, register <name>, checkin <name>, checkout <name>");
+				printf("\nquit, register <name>, getroom <name>, checkin <name>, checkout <name>");
 				printf("\n> ");
 				std::wstring line;
 				std::getline(std::wcin, line);
@@ -100,15 +102,20 @@ int wmain(int argc, wchar_t* argv[])
 				if (verb == L"register")
 				{
 					leger.registerClient(name);
-					printf("\nClient registered.");
+					printf("\nClient registered.\n");
+				}
+				else if (verb == L"getroom")
+				{
+					std::string room = leger.getRoom(name);
+					printf("\nRoom: %s\n", room.c_str());
 				}
 				else if (verb == L"checkin")
 				{
 					uint32_t room;
 					std::string key;
 					leger.checkin(name, room, key);
-					printf("\nClient checked in: Room: %d - Key: %s\n\n", 
-						  int(room), key.c_str());
+					printf("\nClient checked in: Room: %d - Key: %s\n",
+						int(room), key.c_str());
 				}
 				else if (verb == L"checkout")
 				{
@@ -124,28 +131,25 @@ int wmain(int argc, wchar_t* argv[])
 							continue;
 					}
 					files.checkout();
-					printf("\nClient checked out.");
+					printf("\nClient checked out.\n");
 				}
+				else
+					throw std::runtime_error("Invalid command");
 			}
-#ifndef _DEBUG
 			catch (const std::exception& exp)
 			{
-				printf("\nCommand ERROR: %s\n", exp.what());
-				return 1;
+				printf("\nERROR: %s\n", exp.what());
 			}
-#endif
 		}
 
 		printf("\nShutting down...\n");
 		server.stop();
 	}
-#ifndef _DEBUG
 	catch (const std::exception& exp)
 	{
-		printf("\nProgram ERROR: %s\n", exp.what());
+		printf("\nSetup ERROR: %s\n", exp.what());
 		return 1;
 	}
-#endif
 	printf("All done.\n");
 	return 0;
 }

@@ -188,12 +188,14 @@ std::string securelib::UniqueStr()
 	return Hash(stream.str());
 }
 
-std::vector<uint8_t> securelib::LoadFile(const std::wstring& path)
+std::vector<uint8_t> securelib::LoadFile(const std::wstring& path, bool requireExists)
 {
 	trace(L"Loading file: " + path);
 	std::ifstream file(path, std::ios::binary);
 	if (!file)
 	{
+		if (requireExists)
+			throw std::runtime_error("File does not exist");
 		trace(L"Loading file failed");
 		return std::vector<uint8_t>();
 	}

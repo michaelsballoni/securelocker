@@ -78,7 +78,7 @@ namespace securelib
 	/// <summary>
 	/// Load file contents into a data vector
 	/// </summary>
-	std::vector<uint8_t> LoadFile(const std::wstring& path);
+	std::vector<uint8_t> LoadFile(const std::wstring& path, bool requiresExists = true);
 	/// <summary>
 	/// Save a data vector into a file
 	/// </summary>

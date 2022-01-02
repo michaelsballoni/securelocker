@@ -22,21 +22,26 @@ namespace securelib
 	void lockerfiles::put(const std::wstring& filename, const std::vector<uint8_t>& bytes)
 	{
 		log(L"Files: PUT: " + std::to_wstring(m_room) + L" - " + filename);
-		SaveFile(getFilePath(filename), bytes);
+		std::wstring filePath = getFilePath(filename);
+		SaveFile(filePath, bytes);
 	}
 
 	std::vector<uint8_t> lockerfiles::get(const std::wstring& filename)
 	{
 		log(L"Files: GET: " + std::to_wstring(m_room) + L" - " + filename);
-		return LoadFile(getFilePath(filename));
+		std::wstring filePath = getFilePath(filename);
+		if (!fs::exists(filePath))
+			throw std::runtime_error("File does not exist");
+		return LoadFile(filePath);
 	}
 
 	void lockerfiles::del(const std::wstring& filename)
 	{
 		log(L"Files: DEL: " + std::to_wstring(m_room) + L" - " + filename);
 		std::wstring filePath = getFilePath(filename);
-		if (fs::exists(filePath))
-			fs::remove(filePath);
+		if (!fs::exists(filePath))
+			throw std::runtime_error("File does not exist");
+		fs::remove(filePath);
 	}
 
 	std::wstring lockerfiles::dir()

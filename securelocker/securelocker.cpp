@@ -50,28 +50,37 @@ int wmain(int argc, wchar_t* argv[])
 		if (verb == "DEL")
 			verb = "DELETE";
 
-		std::wstring originalFilename = argc < 6 ? L"" : argv[5];
-		auto originalPath = fs::path(originalFilename);
-		std::wstring parentPath = originalPath.has_parent_path() ? originalPath.parent_path() : "";
-		std::wstring filename = originalPath.wstring().substr(parentPath.length());
+		std::wstring originalFilePath = argc < 6 ? L"" : argv[5];
+		auto originalPath = fs::path(originalFilePath);
+		std::wstring parentPath = 
+			originalPath.has_parent_path() 
+			? originalPath.parent_path()
+			: "";
+		parentPath += fs::path::preferred_separator;
+		std::wstring filename = 
+			originalFilePath.empty() 
+			? L"" 
+			: originalFilePath.substr(parentPath.length());
 
-		// Get the password from the user
+		// Get the password from the client
 		// The password is used for encrypting files before sending (PUT) to server
-		// and decrypting files downloaded (GET) from the server
+		// and decrypting files after downloaded (GET) from the server
 		// And that's it
-		printf("Room Key: ");
 		std::string key;
-		char c;
-		while ((c = _getch()) != '\n')
+		while (true)
 		{
-			key += c;
-			printf("*");
+			printf("Room Access Key: ");
+			std::getline(std::cin, key);
+			if (!key.empty())
+				break;
 		}
 
 		setLogFile(stdout);
 #ifdef _DEBUG
 		setLogTrace(true);
 #endif
+		SocketUse useSockets;
+
 		// Create our request, packing the payload for PUTs
 		Request request;
 		request.Verb = verb;
@@ -79,7 +88,7 @@ int wmain(int argc, wchar_t* argv[])
 		if (verb == "PUT")
 		{
 			Buffer payload;
-			payload.Bytes = Encrypt(LoadFile(originalFilename), key);
+			payload.Bytes = Encrypt(LoadFile(originalFilePath), key);
 			request.Payload = payload;
 		}
 
@@ -112,7 +121,8 @@ int wmain(int argc, wchar_t* argv[])
 		}
 		else if (request.Verb == "DIR")
 		{
-			std::wstring dirResult = response.Payload->ToString();
+			std::wstring dirResult = 
+				response.Payload.has_value() ? response.Payload->ToString() : L"";
 			if (dirResult.empty())
 				printf("The locker contains no files.\n");
 			else

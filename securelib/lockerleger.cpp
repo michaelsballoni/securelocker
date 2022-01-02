@@ -15,7 +15,8 @@ namespace securelib
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 
-		std::vector<uint8_t> bytes = Decrypt(LoadFile(m_legerFilePath), m_password);
+		std::vector<uint8_t> bytes = 
+			Decrypt(LoadFile(m_legerFilePath, false), m_password);
 
 		std::string str8;
 		str8.resize(bytes.size());
@@ -51,6 +52,16 @@ namespace securelib
 		save();
 	}
 
+	std::string lockerleger::getRoom(const std::wstring& name)
+	{
+		for (auto it = m_entries.begin(); it != m_entries.end(); ++it)
+		{
+			if ((*it)->name == name)
+				return std::to_string((*it)->room) + " - " + (*it)->key;
+		}
+		throw std::runtime_error("Client not found");
+	}
+
 	void lockerleger::checkin(const std::wstring& name, uint32_t& room, std::string& key)
 	{
 		log(L"Leger: Checkin: " + name);
@@ -59,18 +70,20 @@ namespace securelib
 		auto entry = getNameEntry(name);
 		if (entry == nullptr)
 			throw std::runtime_error("Client is not registered");
+		if (entry->room > 0)
+			throw std::runtime_error("Client already checked in");
 
 		std::string totalUnique = UniqueStr();
-		std::string userUnique;
-		for (size_t u = 0; u < 9; ++u) // only use the first few, unique enough
+		std::string ourUnique;
+		for (size_t u = 0; u < 12; ++u) // only use the first bit, unique enough
 		{
-			if (u == 2 || u == 6) // add dashes for human benefit
-				userUnique += "-";
-			userUnique += totalUnique[u];
+			if (u > 0 && (u % 3) == 0) // add dashes for human benefit
+				ourUnique += "-";
+			ourUnique += 'A' + (totalUnique[u] % 26); // humans like letters
 		}
 
 		room = getAvailableRoom();
-		key = userUnique;
+		key = ourUnique;
 
 		entry->room = room;
 		entry->key = key;

@@ -21,7 +21,7 @@ Response securelib::issueClientHttpCommand
 	bool submittedChallenge = false;
 
 	std::string challengePhrase;
-	std::string nonce;
+	std::string challengeNonce;
 		
 	while (true) // process authentication challenges then the actual request
 	{
@@ -34,7 +34,7 @@ Response securelib::issueClientHttpCommand
 					(
 						std::to_string(room) +
 						challengePhrase +
-						nonce
+						challengeNonce
 					),
 					key
 				);
@@ -67,10 +67,12 @@ Response securelib::issueClientHttpCommand
 
 			gotChallenge = true;
 			challengePhrase = response.Headers["X-Challenge-Phrase"];
-			nonce = response.Headers["X-Challenge-Nonce"];
+			challengeNonce = response.Headers["X-Challenge-Nonce"];
+			//trace("challengePhrase: " + challengePhrase);
+			//trace("challengeNonce: " + challengeNonce);
 		}
 		else
-			throw std::runtime_error(("Server error: " + response.Status).c_str());
+			throw std::runtime_error(("Unregonized Server Response: " + response.Status).c_str());
 	}
 }
 
@@ -142,7 +144,7 @@ static std::shared_ptr<Response> authServerHttpRequest
 		std::shared_ptr<Response> response = std::make_shared<Response>();
 		response->Status = "401 Access Denied";
 		response->Headers["X-Challenge-Phrase"] = challenge;
-		response->Headers["X-Challenge-None"] = nonce;
+		response->Headers["X-Challenge-Nonce"] = nonce;
 		return response;
 	}
 	else // we have a complete set of challenge connections vars
@@ -188,7 +190,8 @@ static std::shared_ptr<Response> authServerHttpRequest
 			);
 		std::string challengeLocalResponse =
 			Hash(encryptedLocalResponse.data(), encryptedLocalResponse.size());
-		if (challengeClientResponse == challengeLocalResponse) // user is granted access
+		//trace("Auth: Local challenge: " + challengeLocalResponse);
+		if (challengeClientResponse == challengeLocalResponse) // client is granted access
 		{
 			trace("Auth: Client challenge response matches, client authenticated");
 			connVars[L"Authenticated"] = L"true";
@@ -246,7 +249,7 @@ namespace securelib
 	{
 		trace(toWideStr(request.Verb) + L" " + Join(request.Path, L"/"));
 
-		// Authenticate the user
+		// Authenticate the client
 		auto& authNonce = m_lockerAuthNonce;
 		auto& authLeger = m_leger;
 		auto authResponse =
@@ -271,7 +274,12 @@ namespace securelib
 		}
 		else if (request.Verb == "GET")
 		{
-			response.Payload->Bytes = files.get(request.Path[0]);
+			response.Payload.emplace(files.get(request.Path[0]));
+			files.del(request.Path[0]); // sorry, no file sharing
+		}
+		else if (request.Verb == "DIR")
+		{
+			response.Payload.emplace(files.dir());
 		}
 		else if (request.Verb == "DELETE")
 		{

@@ -21,6 +21,11 @@ namespace securelib
 		/// Clients must register, out of band, before they can check in
 		/// </summary>
 		void registerClient(const std::wstring& name);
+
+		/// <summary>
+		/// What room is a client staying in?
+		/// </summary>
+		std::string getRoom(const std::wstring& name);
 		
 		/// <summary>
 		/// Takes name and finds entry and find new room # and creates new key

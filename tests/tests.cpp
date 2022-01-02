@@ -94,7 +94,7 @@ namespace securelib
 			if (fs::exists(filePath))
 				fs::remove(filePath);
 
-			std::vector<uint8_t> loaded = LoadFile(filePath);
+			std::vector<uint8_t> loaded = LoadFile(filePath, false);
 			Assert::IsTrue(loaded.empty());
 
 			std::vector<uint8_t> saved = StrToVec("foobar");
