@@ -31,8 +31,8 @@ namespace securelib
 
 	void lockerleger::registerName(const std::wstring& name)
 	{
+		log(L"Leger: Register: " + name);
 		std::lock_guard<std::mutex> lock(m_mutex);
-
 		if
 		(
 			name.find('\t') != std::wstring::npos 
@@ -53,6 +53,7 @@ namespace securelib
 
 	void lockerleger::checkin(const std::wstring& name, uint32_t& room, std::string& key)
 	{
+		log(L"Leger: Checkin: " + name);
 		std::lock_guard<std::mutex> lock(m_mutex);
 
 		auto entry = getNameEntry(name);
@@ -75,10 +76,12 @@ namespace securelib
 		entry->key = key;
 
 		save();
+		log(L"Leger: Checkin complete: " + name + L" - room " + std::to_wstring(room));
 	}
 
 	void lockerleger::checkout(const std::wstring& name, uint32_t& room)
 	{
+		log(L"Leger: Checkout: " + name);
 		std::lock_guard<std::mutex> lock(m_mutex);
 		bool found = false;
 		for (auto it = m_entries.begin(); it != m_entries.end(); ++it)
@@ -93,8 +96,8 @@ namespace securelib
 		}
 		if (!found)
 			throw std::runtime_error("Client not found");
-		// FORNOW - Delete user's files directory
 		save();
+		log(L"Leger: Checkout complete: " + name);
 	}
 
 	std::string lockerleger::getRoomKey(uint32_t room)
@@ -160,8 +163,8 @@ namespace securelib
 		{
 			uint32_t cur = rooms[r];
 			uint32_t should = last + 1;
-			if (cur == should)
-				return cur;
+			if (cur > should) // past empty spot
+				return should;
 			last = cur;
 			max = cur;
 		}
@@ -176,7 +179,7 @@ namespace securelib
 		, key(_key)
 	{}
 
-	lockerleger::legerentry::legerentry(const std::wstring& str)
+	lockerleger::legerentry::legerentry(const std::wstring& str) // serialization
 		: room(0)
 	{
 		std::vector<std::wstring> parts = httplite::Split(str, '\t');

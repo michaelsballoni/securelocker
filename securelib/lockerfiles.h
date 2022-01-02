@@ -2,6 +2,9 @@
 
 namespace securelib
 {
+	/// <summary>
+	/// Manage the files in client lockers
+	/// </summary>
 	class lockerfiles
 	{
 	public:
@@ -17,6 +20,7 @@ namespace securelib
 		std::wstring getFilePath(const std::wstring& filename) const;
 
 	private:
+		uint32_t m_room;
 		std::wstring m_dirPath;
 	};
 }

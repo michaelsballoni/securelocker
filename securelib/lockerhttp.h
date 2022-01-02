@@ -12,6 +12,12 @@
 
 namespace securelib
 {
+	/// <summary>
+	/// Implement making an HTTP request to a locker,
+	/// yielding a response that can be handled by the client
+	/// This function handles the challenge-response 
+	/// authentication protocol, providing a clean interface
+	/// </summary>
 	httplite::Response issueClientHttpCommand
 	(
 		httplite::HttpClient& client, 
@@ -20,6 +26,9 @@ namespace securelib
 		httplite::Request& request
 	);
 
+	/// <summary>
+	/// Manage all HTTP serving for the file locker server
+	/// </summary>
 	class lockerserver
 	{
 	public:
@@ -27,21 +36,20 @@ namespace securelib
 		(
 			uint16_t port,
 			lockerleger& leger,
-			const std::wstring& lockerRootDir, 
-			std::atomic<int>& lockerAuthNonce
+			const std::wstring& lockerRootDir
 		);
 		~lockerserver();
 
 		void start();
 		void stop();
 
-		httplite::Response HandleRequests(const httplite::Request& request);
+		httplite::Response HandleRequest(const httplite::Request& request);
 
 	private:
 		httplite::HttpServer m_httpServer;
 
 		lockerleger& m_leger;
 		std::wstring m_lockerRootDir;
-		std::atomic<int>& m_lockerAuthNonce;
+		std::atomic<int> m_lockerAuthNonce;
 	};
 }

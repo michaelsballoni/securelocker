@@ -3,6 +3,49 @@
 
 namespace fs = std::filesystem;
 
+FILE* g_logFile = nullptr;
+bool g_logTrace = false;
+
+void securelib::setLogFile(FILE* file)
+{
+	g_logFile = file;
+}
+
+void securelib::setLogTrace(bool trace)
+{
+	g_logTrace = trace;
+}
+
+void securelib::log(const std::string& msg)
+{
+	if (g_logFile == nullptr)
+		return;
+	fprintf(g_logFile, "%s\n", msg.c_str());
+	fflush(g_logFile);
+}
+
+void securelib::log(const std::wstring& msg)
+{
+	if (g_logFile == nullptr)
+		return;
+	fprintf(g_logFile, "%S\n", msg.c_str());
+	fflush(g_logFile);
+}
+
+void securelib::trace(const std::string& msg)
+{
+	if (!g_logTrace)
+		return;
+	log(msg);
+}
+
+void securelib::trace(const std::wstring& msg)
+{
+	if (!g_logTrace)
+		return;
+	log(msg);
+}
+
 std::string securelib::Hash(const uint8_t* data, size_t len)
 {
 	// https://github.com/System-Glitch/SHA256
@@ -21,10 +64,14 @@ std::string securelib::Hash(const std::string& str)
 	return Hash(reinterpret_cast<const uint8_t*>(str.c_str()), str.size());
 }
 
-inline void PadVectorTo8ths(std::vector<uint8_t>& vec)
+static void PadVectorTo8ths(std::vector<uint8_t>& vec)
 {
-	while (vec.size() % 8)
-		vec.push_back(0);
+	size_t countToAdd = vec.size() % 8;
+	if (countToAdd == 0)
+		return;
+
+	vec.resize(vec.size() + countToAdd);
+	memset(vec.data() + vec.size() - countToAdd, 0, countToAdd);
 }
 
 uint32_t htonl(uint32_t x)
@@ -147,11 +194,16 @@ std::string securelib::UniqueStr()
 
 std::vector<uint8_t> securelib::LoadFile(const std::wstring& path)
 {
+	trace(L"Loading file: " + path);
 	std::ifstream file(path, std::ios::binary);
 	if (!file)
+	{
+		trace(L"Loading file failed");
 		return std::vector<uint8_t>();
+	}
 
 	std::vector<char> chars(std::istreambuf_iterator<char>(file), {});
+	trace("File loaded: " + std::to_string(chars.size()) + " bytes");
 
 	std::vector<uint8_t> bytes;
 	bytes.resize(chars.size());
@@ -161,9 +213,13 @@ std::vector<uint8_t> securelib::LoadFile(const std::wstring& path)
 
 void securelib::SaveFile(const std::wstring& path, const std::vector<uint8_t>& bytes)
 {
+	trace(L"Saving file: " + path + L" - " + std::to_wstring(bytes.size()) + L" bytes");
 	fs::create_directories(fs::path(path).parent_path());
-	std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::trunc);
-	if (!file)
-		throw new std::runtime_error("Saving file failed");
-	file.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+	{
+		std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::trunc);
+		if (!file)
+			throw new std::runtime_error("Saving file failed");
+		file.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+	}
+	trace("File saved");
 }

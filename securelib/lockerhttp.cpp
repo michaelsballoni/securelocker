@@ -14,9 +14,7 @@ Response securelib::issueClientHttpCommand
 	Request& request
 )
 {
-#ifdef _DEBUG
-	printf("%s %S\n", request.Verb.c_str(), request.Path[0].c_str());
-#endif
+	log(L"Client HTTP Command: " + std::to_wstring(room) + L" - " + toWideStr(request.Verb) + L" - " + request.Path[0]);
 	request.Headers["X-Room-Number"] = std::to_string(room);
 
 	bool gotChallenge = false;
@@ -43,24 +41,18 @@ Response securelib::issueClientHttpCommand
 			std::string challengeResponse =
 				Hash(encryptedResponse.data(), encryptedResponse.size());
 			request.Headers["X-Challenge-Response"] = challengeResponse;
-#ifdef _DEBUG
-			printf("Got challenge, response: %s\n", challengeResponse.c_str());
-#endif
 			submittedChallenge = true;
+			trace("Got challenge, response: " + challengeResponse);
 		}
 
-#ifdef _DEBUG
-		printf("Issuing request...\n");
-#endif
+		trace("Issuing request...");
 		Response response = client.ProcessRequest(request);
-#ifdef _DEBUG
-		printf("Response: %s\n", response.Status.c_str());
-#endif
+		trace("Response: " + response.Status);
 		uint16_t statusCode = response.GetStatusCode();
 		if (statusCode / 100 == 2)
 		{
 			// Authentication is fine, so remove the auth headers 
-			// to keep requests clean
+			// to keep subsequent requests clean
 			request.Headers.erase("X-Room-Number");
 			request.Headers.erase("X-Challenge-Response");
 			return response;
@@ -89,10 +81,12 @@ static std::shared_ptr<Response> authServerHttpRequest // local helper function
 	// Make connection variables easier to work with
 	auto& connVars = *request.ConnectionVariables;
 
-	// Maybe the user is already authenticated
+	// Bail if the client is already authenticated
 	if (connVars.find(L"Authenticated") != connVars.end())
+	{
+		trace("Auth: Client authenticated");
 		return nullptr;
-
+	}
 	// Unpack the challenge connection vars
 	auto roomIt = connVars.find(L"RoomNumber");
 	auto challengeIt = connVars.find(L"ChallengePhrase");
@@ -105,7 +99,9 @@ static std::shared_ptr<Response> authServerHttpRequest // local helper function
 			||
 			nonceIt == connVars.end()
 			)
-	{ // No challenge yet
+	{
+		trace("Auth: Client not challenged yet");
+
 		// Get the room number from the request and validate it
 		// NOTE: This is the only time when the room number is read from the client
 		//		 We can't allow clients to change which room they're talking about 
@@ -113,6 +109,7 @@ static std::shared_ptr<Response> authServerHttpRequest // local helper function
 		auto roomRequestIt = request.Headers.find("X-Room-Number");
 		if (roomRequestIt == request.Headers.end())
 		{
+			trace("Auth: No room number");
 			std::shared_ptr<Response> response = std::make_shared<Response>();
 			response->Status = "403 Invalid Request";
 			return response;
@@ -120,6 +117,7 @@ static std::shared_ptr<Response> authServerHttpRequest // local helper function
 		int roomInt = atoi(roomRequestIt->second.c_str());
 		if (roomInt <= 0)
 		{
+			trace("Auth: Invalid room number");
 			std::shared_ptr<Response> response = std::make_shared<Response>();
 			response->Status = "403 Invalid Request";
 			return response;
@@ -128,6 +126,7 @@ static std::shared_ptr<Response> authServerHttpRequest // local helper function
 		// Create the challenge
 		std::string challenge = UniqueStr();
 		std::string nonce = std::to_string(nonceGen());
+		trace("Auth: Challenge: " + challenge + " - " + nonce);
 
 		// Stash the challenge in connections vars
 		connVars[L"RoomNumber"] = std::to_wstring(roomInt);
@@ -143,6 +142,8 @@ static std::shared_ptr<Response> authServerHttpRequest // local helper function
 	}
 	else // we have a complete set of challenge connections vars
 	{
+		trace("Auth: Client challenged");
+
 		// Unpack the server challenge from the connection vars
 		uint32_t room = static_cast<uint32_t>(_wtoi(roomIt->second.c_str()));
 		std::string challengePhrase = toNarrowStr(challengeIt->second);
@@ -160,6 +161,7 @@ static std::shared_ptr<Response> authServerHttpRequest // local helper function
 			auto requestChallengeResponseIt = request.Headers.find("X-Challenge-Response");
 			if (requestChallengeResponseIt == request.Headers.end())
 			{
+				trace("Auth: Client did not respond to challenge");
 				std::shared_ptr<Response> response = std::make_shared<Response>();
 				response->Status = "401 Access Denied";
 				return response;
@@ -183,12 +185,14 @@ static std::shared_ptr<Response> authServerHttpRequest // local helper function
 			Hash(encryptedLocalResponse.data(), encryptedLocalResponse.size());
 		if (challengeClientResponse == challengeLocalResponse) // user is granted access
 		{
+			trace("Auth: Client challenge response matches, client authenticated");
 			connVars[L"Authenticated"] = L"true";
 			connVars[L"RoomNumber"] = std::to_wstring(room);
 			return nullptr;
 		}
-		else // user's response to challenge fails
+		else
 		{
+			trace("Auth: Client challenge response does not match");
 			std::shared_ptr<Response> response = std::make_shared<Response>();
 			response->Status = "401 Access Denied";
 			return response;
@@ -205,13 +209,13 @@ namespace securelib
 	(
 		uint16_t port,
 		lockerleger& leger,
-		const std::wstring& lockerRootDir,
-		std::atomic<int>& lockerAuthNonce
+		const std::wstring& lockerRootDir
 	)
-		: m_httpServer(port, [this](const Request& request) { return HandleRequests(request); })
+		: m_httpServer(port, [this](const Request& request) { return HandleRequest(request); })
 		, m_leger(leger)
 		, m_lockerRootDir(lockerRootDir)
-		, m_lockerAuthNonce(lockerAuthNonce)
+		, m_lockerAuthNonce(rand())
+	)
 	{
 	}
 
@@ -222,19 +226,22 @@ namespace securelib
 
 	void lockerserver::start()
 	{
+		log("Locker Server: Starting");
 		m_httpServer.StartServing();
+		log("Locker Server: Started");
 	}
 
 	void lockerserver::stop()
 	{
+		log("Locker Server: Stopping");
 		m_httpServer.StopServing();
+		log("Locker Server: Stopped");
 	}
 
-	Response lockerserver::HandleRequests(const Request& request)
+	Response lockerserver::HandleRequest(const Request& request)
 	{
-#ifdef _DEBUG
-		printf("%s %S\n", request.Verb.c_str(), Join(request.Path, L"/").c_str());
-#endif
+		trace(toWideStr(request.Verb) + L" " + Join(request.Path, L"/"));
+
 		// Authenticate the user
 		auto& authNonce = m_lockerAuthNonce;
 		auto& authLeger = m_leger;
@@ -267,6 +274,7 @@ namespace securelib
 			files.del(request.Path[0]);
 			response.Status = "204 File Deleted";
 		}
+		trace("Response: " + response.Status);
 		return response;
 	}
 }

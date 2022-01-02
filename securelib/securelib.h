@@ -1,8 +1,19 @@
+#include <stdio.h>
+
 #include <string>
 #include <vector>
 
 namespace securelib
 {
+	void setLogFile(FILE* file);
+	void setLogTrace(bool trace);
+
+	void log(const std::string& msg);
+	void log(const std::wstring& msg);
+
+	void trace(const std::string& msg);
+	void trace(const std::wstring& msg);
+
 	std::string Hash(const uint8_t* data, size_t len);
 	std::string Hash(const std::string& str);
 

@@ -1,5 +1,9 @@
-document code, adding lots of debug printf's
+document lib code, whatever's not clear from logging 
 
-get client and server playing nice together
+have apps to write logs to stdout, and have -trace cmd line flag
+
+get client and server apps playing nice together
+
+build and pass client-server unit tests
 
 write article

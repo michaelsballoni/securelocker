@@ -1,20 +1,19 @@
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // toWideString / toNarrowString
 
+#include "securelib.h"
 #include "lockerleger.h"
 #include "lockerfiles.h"
 #include "lockerhttp.h"
-#include "securelib.h"
+#pragma comment(lib, "securelib")
 
 #include "Core.h"
 #include "HttpServer.h"
+#pragma comment(lib, "httplite")
 
 #include <atomic>
 #include <conio.h> // _getch()
 #include <filesystem>
 #include <iostream>
-
-#pragma comment(lib, "httplite")
-#pragma comment(lib, "securelib")
 
 using namespace httplite;
 using namespace securelib;
@@ -28,10 +27,9 @@ int wmain(int argc, wchar_t* argv[])
 #endif
 	{
 		srand(time(nullptr) % RAND_MAX);
-		std::atomic<int> lockerAuthNonce = rand();
 
 		if (argc != 3) {
-			printf("Usage: securelockerd <port> <leger file path>\n");
+			printf("Usage: <port> <locker root dir path>\n");
 			return 0;
 		}
 
@@ -49,21 +47,20 @@ int wmain(int argc, wchar_t* argv[])
 			printf("*");
 		}
 
-		std::wstring legerFilePath = argv[2];
+		std::wstring lockerRootDir = argv[2];
+		std::wstring legerFilePath = fs::path(lockerRootDir).append("leger.dat");
 		lockerleger leger(password, legerFilePath);
-		std::wstring lockerRootDir = fs::path(legerFilePath).parent_path().wstring();
 
-		printf("Setting up serving of port %d...", port);
+		printf("Serving port %d...\n", port);
 		lockerserver server
 		(
 			static_cast<uint16_t>(port), 
 			leger, 
-			lockerRootDir, 
-			lockerAuthNonce
+			lockerRootDir
 		);
 		server.start();
-		printf("done!\n");
 
+		printf("Ready for your commands...\n");
 		while (true)
 		{
 #ifndef _DEBUG

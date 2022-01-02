@@ -1,8 +1,7 @@
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // toWideString / toNarrowString
 
-#include "HttpClient.h"
-
 #include "Core.h"
+#include "HttpClient.h"
 #pragma comment(lib, "httplite")
 using namespace httplite;
 
@@ -27,7 +26,7 @@ int wmain(int argc, wchar_t* argv[])
 		// Validate command line usage
 		if (argc < 5) 
 		{
-			printf("Usage: securelocker <server> <port> <room #> <put|get|delete|dir> [filename]\n");
+			printf("Usage: <server> <port> <room #> <put|get|delete|dir> [filename]\n");
 			return 0;
 		}
 		
