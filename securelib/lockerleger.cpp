@@ -29,7 +29,7 @@ namespace securelib
 			m_entries.emplace_back(std::make_shared<legerentry>(line));
 	}
 
-	void lockerleger::registerName(const std::wstring& name)
+	void lockerleger::registerClient(const std::wstring& name)
 	{
 		log(L"Leger: Register: " + name);
 		std::lock_guard<std::mutex> lock(m_mutex);
@@ -62,9 +62,9 @@ namespace securelib
 
 		std::string totalUnique = UniqueStr();
 		std::string userUnique;
-		for (size_t u = 0; u <= 10; ++u)
+		for (size_t u = 0; u < 9; ++u) // only use the first few, unique enough
 		{
-			if (u == 2 || u == 6) // phone number style
+			if (u == 2 || u == 6) // add dashes for human benefit
 				userUnique += "-";
 			userUnique += totalUnique[u];
 		}
@@ -143,8 +143,9 @@ namespace securelib
 		return nullptr;
 	}
 
-	std::vector<uint32_t> lockerleger::getRooms() const
+	uint32_t lockerleger::getAvailableRoom() const
 	{
+		// Get the sorted list of all rooms
 		std::vector<uint32_t> rooms;
 		for (const auto& legerentry : m_entries)
 		{
@@ -152,12 +153,8 @@ namespace securelib
 				rooms.push_back(legerentry->room);
 		}
 		std::sort(rooms.begin(), rooms.end());
-		return rooms;
-	}
 
-	uint32_t lockerleger::getAvailableRoom() const
-	{
-		std::vector<uint32_t> rooms = getRooms();
+		// Walk the list looking for a gap in the sequence
 		uint32_t last = 0, max = 0;
 		for (size_t r = 0; r < rooms.size(); ++r)
 		{
@@ -168,12 +165,14 @@ namespace securelib
 			last = cur;
 			max = cur;
 		}
+
+		// Failing that, go one after the end
 		return max + 1;
 	}
 
 	lockerleger::legerentry::legerentry() : room(0) {}
 
-	lockerleger::legerentry::legerentry(const std::wstring& _name, uint32_t _room, std::string _key)
+	lockerleger::legerentry::legerentry(const std::wstring& _name, uint32_t _room, const std::string& _key)
 		: room(_room)
 		, name(_name)
 		, key(_key)
@@ -186,13 +185,17 @@ namespace securelib
 		if (parts.size() != 3)
 			throw std::runtime_error("Leger legerentry not right parts");
 
+		int roomInt = _wtoi(parts[1].c_str());
+		if (roomInt < 0)
+			throw std::runtime_error("Leger legerentry invalid room number");
+
 		name = parts[0];
-		room = static_cast<uint32_t>(_wtoi(parts[1].c_str()));
+		room = static_cast<uint32_t>(roomInt);
 		key = httplite::toNarrowStr(parts[2]);
 	}
 
-	std::wstring lockerleger::legerentry::toString() const
+	std::wstring lockerleger::legerentry::toString() const // serialization
 	{
-		return name + L"\t" + std::to_wstring(room) + L"\t" + std::wstring(key.begin(), key.end());
+		return name + L"\t" + std::to_wstring(room) + L"\t" + httplite::toWideStr(key);
 	}
 }

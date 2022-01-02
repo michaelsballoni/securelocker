@@ -13,6 +13,14 @@ namespace securelib
 	TEST_CLASS(LibTests)
 	{
 	public:
+		TEST_CLASS_INITIALIZE(InitLibTests)
+		{
+			setLogFile(stdout);
+#ifdef _DEBUG
+			setLogTrace(true);
+#endif
+		}		
+		
 		TEST_METHOD(TestHash)
 		{
 			std::string hash1 = Hash("foo");

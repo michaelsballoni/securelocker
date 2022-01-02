@@ -13,10 +13,11 @@
 namespace securelib
 {
 	/// <summary>
-	/// Implement making an HTTP request to a locker,
+	/// Implement making an HTTP request to a file locker,
 	/// yielding a response that can be handled by the client
 	/// This function handles the challenge-response 
-	/// authentication protocol, providing a clean interface
+	/// authentication protocol, hiding the details behind this
+	/// clean interface
 	/// </summary>
 	httplite::Response issueClientHttpCommand
 	(

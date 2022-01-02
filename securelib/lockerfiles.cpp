@@ -8,7 +8,7 @@ namespace securelib
 {
 	lockerfiles::lockerfiles(const std::wstring& rootDirPath, uint32_t room)
 		: m_dirPath(rootDirPath)
-		, m_room(room)
+		, m_room(room) // used for logging
 	{
 		if (m_dirPath.back() != fs::path::preferred_separator)
 			m_dirPath += fs::path::preferred_separator;
@@ -43,19 +43,15 @@ namespace securelib
 	{
 		log(L"Files: DIR: " + std::to_wstring(m_room));
 		std::wstring dirResults;
-		if (fs::exists(m_dirPath))
-		{
-			for (const auto& filePath : fs::directory_iterator(m_dirPath))
-				dirResults += filePath.path().wstring().substr(m_dirPath.size()) + L"\n";
-		}
+		for (const auto& filePath : fs::directory_iterator(m_dirPath))
+			dirResults += filePath.path().wstring().substr(m_dirPath.size()) + L"\n";
 		return dirResults;
 	}
 
 	void lockerfiles::checkout()
 	{
 		log(L"Files: OUT: " + std::to_wstring(m_room));
-		if (fs::exists(m_dirPath))
-			fs::remove_all(m_dirPath);
+		fs::remove_all(m_dirPath);
 	}
 
 	std::wstring lockerfiles::getFilePath(const std::wstring& filename) const

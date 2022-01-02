@@ -30,9 +30,6 @@
     <ClInclude Include="lockerfiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lockerlog.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="lockerhttp.h">
       <Filter>Header Files</Filter>
     </ClInclude>

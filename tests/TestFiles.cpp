@@ -14,6 +14,14 @@ namespace securelib
 	TEST_CLASS(FilesTests)
 	{
 	public:
+		TEST_CLASS_INITIALIZE(InitFilesTests)
+		{
+			setLogFile(stdout);
+#ifdef _DEBUG
+			setLogTrace(true);
+#endif
+		}
+
 		TEST_METHOD(TestFiles)
 		{
 			std::wstring rootDirPath = fs::path(__FILE__).parent_path().append("files");

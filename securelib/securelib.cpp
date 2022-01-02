@@ -54,7 +54,7 @@ std::string securelib::Hash(const uint8_t* data, size_t len)
 
 	uint8_t* digestBytes = hasher.digest();
 	std::string digest = hasher.toString(digestBytes);
-	delete[] digestBytes;
+	delete[] digestBytes; // don't forget to delete the digest!
 	
 	return digest;
 }
@@ -66,12 +66,8 @@ std::string securelib::Hash(const std::string& str)
 
 static void PadVectorTo8ths(std::vector<uint8_t>& vec)
 {
-	size_t countToAdd = vec.size() % 8;
-	if (countToAdd == 0)
-		return;
-
-	vec.resize(vec.size() + countToAdd);
-	memset(vec.data() + vec.size() - countToAdd, 0, countToAdd);
+	while (vec.size() % 8)
+		vec.push_back(0);
 }
 
 uint32_t htonl(uint32_t x)

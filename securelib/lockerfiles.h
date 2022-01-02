@@ -3,7 +3,11 @@
 namespace securelib
 {
 	/// <summary>
-	/// Manage the files in client lockers
+	/// Manage files contained in client lockers
+	/// Each client locker is a flat list of files, no sub-directories
+	/// Folks can use ZIP files if they need folders
+	/// And they can password-protect those ZIP files 
+	/// for a higher degree of security
 	/// </summary>
 	class lockerfiles
 	{

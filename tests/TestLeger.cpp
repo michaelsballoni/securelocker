@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CppUnitTest.h"
 
+#include "securelib.h"
 #include "lockerleger.h"
 #pragma comment(lib, "securelib")
 
@@ -13,6 +14,14 @@ namespace securelib
 	TEST_CLASS(LegerTests)
 	{
 	public:
+		TEST_CLASS_INITIALIZE(InitLegerTests)
+		{
+			setLogFile(stdout);
+#ifdef _DEBUG
+			setLogTrace(true);
+#endif
+		}
+
 		TEST_METHOD(TestLeger)
 		{
 			std::wstring filePath = fs::path(__FILE__).parent_path().append("leger.dat");
@@ -22,7 +31,7 @@ namespace securelib
 			{
 				lockerleger leger(L"foobar", filePath);
 				leger.load();
-				leger.registerName(L"Blet Monkey");
+				leger.registerClient(L"Blet Monkey");
 			}
 
 			{

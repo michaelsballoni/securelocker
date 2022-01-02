@@ -47,6 +47,11 @@ int wmain(int argc, wchar_t* argv[])
 			printf("*");
 		}
 
+		setLogFile(stdout);
+#ifdef _DEBUG
+		setLogTrace(true);
+#endif
+
 		std::wstring lockerRootDir = argv[2];
 		std::wstring legerFilePath = fs::path(lockerRootDir).append("leger.dat");
 		lockerleger leger(password, legerFilePath);
@@ -94,7 +99,7 @@ int wmain(int argc, wchar_t* argv[])
 
 				if (verb == L"register")
 				{
-					leger.registerName(name);
+					leger.registerClient(name);
 					printf("\nClient registered.");
 				}
 				else if (verb == L"checkin")

@@ -14,7 +14,7 @@ Response securelib::issueClientHttpCommand
 	Request& request
 )
 {
-	log(L"Client HTTP Command: " + std::to_wstring(room) + L" - " + toWideStr(request.Verb) + L" - " + request.Path[0]);
+	trace(L"Client HTTP Command: " + std::to_wstring(room) + L" - " + toWideStr(request.Verb) + L" - " + request.Path[0]);
 	request.Headers["X-Room-Number"] = std::to_string(room);
 
 	bool gotChallenge = false;
@@ -59,8 +59,11 @@ Response securelib::issueClientHttpCommand
 		}
 		else if (statusCode / 100 == 4)
 		{
-			if (submittedChallenge)
-				throw std::runtime_error("Access denied.");
+			// no double-dipping, you get one shot
+			// client expects a successful response, 
+			// so we throw instead for return response
+			if (submittedChallenge) 
+				throw std::runtime_error("Access denied."); 
 
 			gotChallenge = true;
 			challengePhrase = response.Headers["X-Challenge-Phrase"];
@@ -71,7 +74,8 @@ Response securelib::issueClientHttpCommand
 	}
 }
 
-static std::shared_ptr<Response> authServerHttpRequest // local helper function
+// local helper function for managing authentication
+static std::shared_ptr<Response> authServerHttpRequest 
 (
 	const Request& request,
 	std::function<int()> nonceGen,
@@ -87,18 +91,19 @@ static std::shared_ptr<Response> authServerHttpRequest // local helper function
 		trace("Auth: Client authenticated");
 		return nullptr;
 	}
+
 	// Unpack the challenge connection vars
 	auto roomIt = connVars.find(L"RoomNumber");
 	auto challengeIt = connVars.find(L"ChallengePhrase");
 	auto nonceIt = connVars.find(L"ChallengeNonce");
 	if
-		(
-			roomIt == connVars.end()
-			||
-			challengeIt == connVars.end()
-			||
-			nonceIt == connVars.end()
-			)
+	(
+		roomIt == connVars.end()
+		||
+		challengeIt == connVars.end()
+		||
+		nonceIt == connVars.end()
+	)
 	{
 		trace("Auth: Client not challenged yet");
 
@@ -133,7 +138,7 @@ static std::shared_ptr<Response> authServerHttpRequest // local helper function
 		connVars[L"ChallengePhrase"] = toWideStr(challenge);
 		connVars[L"ChallengeNonce"] = toWideStr(nonce);
 
-		// Return the challenget response
+		// Return the challenge response
 		std::shared_ptr<Response> response = std::make_shared<Response>();
 		response->Status = "401 Access Denied";
 		response->Headers["X-Challenge-Phrase"] = challenge;
@@ -215,7 +220,6 @@ namespace securelib
 		, m_leger(leger)
 		, m_lockerRootDir(lockerRootDir)
 		, m_lockerAuthNonce(rand())
-	)
 	{
 	}
 

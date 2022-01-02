@@ -170,7 +170,6 @@
     <ClInclude Include="Blowfish.h" />
     <ClInclude Include="lockerfiles.h" />
     <ClInclude Include="lockerleger.h" />
-    <ClInclude Include="lockerlog.h" />
     <ClInclude Include="lockerhttp.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="securelib.h" />

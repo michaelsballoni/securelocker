@@ -68,6 +68,10 @@ int wmain(int argc, wchar_t* argv[])
 			printf("*");
 		}
 
+		setLogFile(stdout);
+#ifdef _DEBUG
+		setLogTrace(true);
+#endif
 		// Create our request, packing the payload for PUTs
 		Request request;
 		request.Verb = verb;
