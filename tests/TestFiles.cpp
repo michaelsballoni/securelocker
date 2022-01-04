@@ -1,9 +1,8 @@
 #include "pch.h"
 #include "CppUnitTest.h"
 
-#include "lockerfiles.h"
 #include "securelib.h"
-#pragma comment(lib, "securelib")
+#include "lockerfiles.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

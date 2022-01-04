@@ -3,7 +3,6 @@
 
 #include "securelib.h"
 #include "lockerleger.h"
-#pragma comment(lib, "securelib")
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

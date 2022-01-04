@@ -1,9 +1,1 @@
-get client and server apps playing nice together
-	debug
-	release
-	put the system through its paces
-
-build and pass client-server unit test
-	put the system through its paces
-
 write article

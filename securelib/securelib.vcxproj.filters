@@ -30,7 +30,10 @@
     <ClInclude Include="lockerfiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lockerhttp.h">
+    <ClInclude Include="lockerclient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lockerserver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -56,7 +59,10 @@
     <ClCompile Include="lockerfiles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lockerhttp.cpp">
+    <ClCompile Include="lockerclient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lockerserver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

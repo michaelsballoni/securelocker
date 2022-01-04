@@ -10,3 +10,5 @@
 
 #include "Core.h"
 #pragma comment(lib, "httplite")
+
+#pragma comment(lib, "securelib")

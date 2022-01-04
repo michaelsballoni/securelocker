@@ -1,80 +1,10 @@
 #include "pch.h"
-#include "lockerhttp.h"
+#include "lockerserver.h"
 #include "lockerfiles.h"
 #include "securelib.h"
 
 using namespace httplite;
 using namespace securelib;
-
-Response securelib::issueClientHttpCommand
-(
-	HttpClient& client,
-	uint32_t room,
-	const std::string& key,
-	Request& request
-)
-{
-	trace(L"Client HTTP Command: " + std::to_wstring(room) + L" - " + toWideStr(request.Verb) + L" - " + request.Path[0]);
-	request.Headers["X-Room-Number"] = std::to_string(room);
-
-	bool gotChallenge = false;
-	bool submittedChallenge = false;
-
-	std::string challengePhrase;
-	std::string challengeNonce;
-		
-	while (true) // process authentication challenges then the actual request
-	{
-		if (gotChallenge)
-		{
-			auto encryptedResponse =
-				Encrypt
-				(
-					StrToVec
-					(
-						std::to_string(room) +
-						challengePhrase +
-						challengeNonce
-					),
-					key
-				);
-			std::string challengeResponse =
-				Hash(encryptedResponse.data(), encryptedResponse.size());
-			request.Headers["X-Challenge-Response"] = challengeResponse;
-			submittedChallenge = true;
-			trace("Got challenge, response: " + challengeResponse);
-		}
-
-		trace("Issuing request...");
-		Response response = client.ProcessRequest(request);
-		trace("Response: " + response.Status);
-		uint16_t statusCode = response.GetStatusCode();
-		if (statusCode / 100 == 2)
-		{
-			// Authentication is fine, so remove the auth headers 
-			// to keep subsequent requests clean
-			request.Headers.erase("X-Room-Number");
-			request.Headers.erase("X-Challenge-Response");
-			return response;
-		}
-		else if (statusCode / 100 == 4)
-		{
-			// no double-dipping, you get one shot
-			// client expects a successful response, 
-			// so we throw instead for return response
-			if (submittedChallenge) 
-				throw std::runtime_error("Access denied."); 
-
-			gotChallenge = true;
-			challengePhrase = response.Headers["X-Challenge-Phrase"];
-			challengeNonce = response.Headers["X-Challenge-Nonce"];
-			//trace("challengePhrase: " + challengePhrase);
-			//trace("challengeNonce: " + challengeNonce);
-		}
-		else
-			throw std::runtime_error(("Unregonized Server Response: " + response.Status).c_str());
-	}
-}
 
 // local helper function for managing authentication
 static std::shared_ptr<Response> authServerHttpRequest 

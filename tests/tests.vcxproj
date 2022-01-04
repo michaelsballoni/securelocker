@@ -177,6 +177,7 @@
     <ClCompile Include="TestFiles.cpp" />
     <ClCompile Include="TestLeger.cpp" />
     <ClCompile Include="tests.cpp" />
+    <ClCompile Include="TestSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

@@ -3,7 +3,7 @@
 #include "securelib.h"
 #include "lockerleger.h"
 #include "lockerfiles.h"
-#include "lockerhttp.h"
+#include "lockerserver.h"
 #pragma comment(lib, "securelib")
 
 #include "Core.h"
@@ -104,18 +104,18 @@ int wmain(int argc, wchar_t* argv[])
 					leger.registerClient(name);
 					printf("\nClient registered.\n");
 				}
-				else if (verb == L"getroom")
-				{
-					std::string room = leger.getRoom(name);
-					printf("\nRoom: %s\n", room.c_str());
-				}
 				else if (verb == L"checkin")
 				{
 					uint32_t room;
 					std::string key;
 					leger.checkin(name, room, key);
 					printf("\nClient checked in: Room: %d - Key: %s\n",
-						int(room), key.c_str());
+							int(room), key.c_str());
+				}
+				else if (verb == L"getroom")
+				{
+					std::string room = leger.getRoom(name);
+					printf("\nRoom: %s\n", room.c_str());
 				}
 				else if (verb == L"checkout")
 				{
