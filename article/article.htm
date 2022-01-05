@@ -1,0 +1,123 @@
+﻿<!DOCTYPE HTML>
+<!--------------------------------------------------------------------------->  
+<!--                           INTRODUCTION                                
+
+ The CodeProject article submission template (HTML version)
+
+Using this template will help us post your article sooner. To use, just 
+follow the 3 easy steps below:
+ 
+     1. Fill in the article description details
+     2. Add links to your images and downloads
+     3. Include the main article text
+
+That's all there is to it! All formatting will be done by our submission
+scripts and style sheets. 
+
+-->  
+<!--------------------------------------------------------------------------->  
+<!--                        IGNORE THIS SECTION                            -->
+<html>
+<head>
+<title>CodeProject</title>
+<Style>
+BODY, P, TD { font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 10pt }
+BODY {padding:15px; }
+H2,H3,H4,H5 { color: #ff9900; font-weight: bold; }
+H2 { font-size: 13pt; }
+H3 { font-size: 12pt; }
+H4 { font-size: 10pt; color: black; }
+PRE { BACKGROUND-COLOR: #FBEDBB; FONT-FAMILY: "Courier New", Courier, mono; WHITE-SPACE: pre; }
+CODE { COLOR: #990000; FONT-FAMILY: "Courier New", Courier, mono; }
+</style>
+<link type="text/css" rel="stylesheet" 
+      href="https://codeproject.global.ssl.fastly.net/App_Themes/CodeProject/Css/Main.min.css">
+</head>
+<body bgcolor="#FFFFFF" color=#000000>
+<!--------------------------------------------------------------------------->  
+
+
+<!-------------------------------     STEP 1      --------------------------->
+<!--  Fill in the details (CodeProject will reformat this section for you) -->
+
+    <pre>
+Title:       securelocker: an httplite application for pretty good file storage security
+Description: An exciting proof-of-concept that sews httplite with security components
+Abstract:    In this article you will see how easy it is to write REST applications using httplite,
+             and how off-the-shelf open source security components can combine to implement
+             an interesting pretty secure file storage application
+
+Author:      Michael Sydney Balloni
+Email:       balloni.michael@yahoo.com
+
+Language:    C++
+Platform:    Cross-Platform
+Technology:  REST APIs
+Topic:       Pretty Good Security
+
+Section      Not
+SubSection   Sure
+
+License:     Ms-PL
+</pre>
+
+<!-------------------------------     STEP 2      --------------------------->
+<!--  Include download and sample image information.                       --> 
+
+<ul class=download>
+<li><a href="source.zip">Download source - XXX Kb </a></li>
+</ul>
+
+<!-------------------------------     STEP 3      --------------------------->
+
+<!--  Add the article text. Please use simple formatting (<h2>, <p> etc)   -->
+
+<h2>Introduction</h2>
+<p>
+    This project shows how you can weave httplite REST APIs with
+    off-the-shelf security components to build an interesting 
+    pretty secure file storage application.
+</p>
+
+<h2>securelocker - pretty secure file storage</h2>
+<p>
+    The idea with securelocker is that we'd like to model a software system
+    after the real world "applications" of items stored in lockers.
+    You pay the fee, you get assigned a locker number, and you get a key to the locker,
+    you put stuff in it, maybe you give the locker number and key to somebody else,
+    or you just come back to get the stuff later.
+    Important: The locker proprietor keeps a copy of the key you got, 
+    and has a "sudo" key that can unlock any locker.  So it's pretty secure,
+    as secure as you trust the locker outfit in general, and the person you got
+    the key from in particular.
+</p>
+<p>
+    So to model this in C++, I decided to write two applications.
+</p>
+
+<h3>securelockerd</h3>
+<p>
+    securelockerd is a command line application that serves as the locker outfit,
+    and the operator of the application is the person running the business.
+    The application takes commands to register, checkin, and checkout clients.
+</p>
+
+<h3>securelocker</h3>
+<p>
+    securelocker is another command line program where you can put, dir, get, and del
+    files in the locker.
+</p>
+
+
+<h2>Conclusion and Points of Interest</h2>
+<p>
+    I hope you've seen how easy C++ REST API programming is with httplite,
+    and how there are plenty of off-the-shelf security components that you
+    can easily use to build pretty secure applications, like securelocker.
+</p>
+
+<!-------------------------------    That's it!   --------------------------->
+</body>
+
+</html>
+
