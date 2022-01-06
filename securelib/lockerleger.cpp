@@ -168,19 +168,17 @@ namespace securelib
 		std::sort(rooms.begin(), rooms.end());
 
 		// Walk the list looking for a gap in the sequence
-		uint32_t last = 0, max = 0;
-		for (size_t r = 0; r < rooms.size(); ++r)
+		uint32_t last = 0;
+		for (uint32_t cur : rooms)
 		{
-			uint32_t cur = rooms[r];
 			uint32_t should = last + 1;
 			if (cur > should) // past empty spot
 				return should;
 			last = cur;
-			max = cur;
 		}
 
 		// Failing that, go one after the end
-		return max + 1;
+		return last + 1;
 	}
 
 	lockerleger::legerentry::legerentry() : room(0) {}

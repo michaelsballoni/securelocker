@@ -2,6 +2,8 @@
 #include "lockerfiles.h"
 #include "securelib.h"
 
+#include "Core.h"
+
 namespace fs = std::filesystem;
 
 namespace securelib
@@ -61,6 +63,48 @@ namespace securelib
 
 	std::wstring lockerfiles::getFilePath(const std::wstring& filename) const
 	{
+		if (filename.empty())
+			throw std::runtime_error("Invalid filename: (empty)");
+		if
+		(
+			filename == L"."
+			||
+			filename.front() == ' ' 
+			|| 
+			filename.back() == ' ' 
+			|| 
+			filename.back() == '.'  
+			|| 
+			filename.find(L"..") != std::wstring::npos
+		)
+		{
+			throw std::runtime_error(("Invalid filename: " + httplite::toNarrowStr(filename)).c_str());
+		}
+
+		static std::vector<char> InvalidFilenameTokens
+		{
+			'\"',
+			'\\',
+			':',
+			'/',
+			'<',
+			'>',
+			'|',
+			'?',
+			'*',
+		};
+		for (auto invalid : InvalidFilenameTokens)
+		{
+			if (filename.find(invalid) != std::wstring::npos)
+				throw std::runtime_error(("Invalid filename: " + httplite::toNarrowStr(filename)).c_str());
+		}
+
+		for (auto c : filename)
+		{
+			if ((c >= 0x0 && c <= 0x1F) || c == 0x7F)
+				throw std::runtime_error(("Invalid filename: " + httplite::toNarrowStr(filename)).c_str());
+		}
+
 		return m_dirPath + filename;
 	}
 }

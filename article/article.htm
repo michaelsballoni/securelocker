@@ -41,11 +41,11 @@ CODE { COLOR: #990000; FONT-FAMILY: "Courier New", Courier, mono; }
 <!--  Fill in the details (CodeProject will reformat this section for you) -->
 
     <pre>
-Title:       securelocker: an httplite application for pretty good file storage security
+Title:       securelocker: an httplite application for "pretty good" file storage locker security
 Description: An exciting proof-of-concept that sews httplite with security components
 Abstract:    In this article you will see how easy it is to write REST applications using httplite,
              and how off-the-shelf open source security components can combine to implement
-             an interesting pretty secure file storage application
+             an interesting "pretty secure" file storage application
 
 Author:      Michael Sydney Balloni
 Email:       balloni.michael@yahoo.com
@@ -58,13 +58,14 @@ Topic:       Pretty Good Security
 Section      Not
 SubSection   Sure
 
-License:     Ms-PL
+License:     Microsoft Public License
 </pre>
 
 <!-------------------------------     STEP 2      --------------------------->
 <!--  Include download and sample image information.                       --> 
 
 <ul class=download>
+    <!-- FORNOW - Build source.zip and put its size here -->
 <li><a href="source.zip">Download source - XXX Kb </a></li>
 </ul>
 
@@ -75,39 +76,488 @@ License:     Ms-PL
 <h2>Introduction</h2>
 <p>
     This project shows how you can weave httplite REST APIs with
-    off-the-shelf security components to build an interesting 
-    pretty secure file storage application.
+    off-the-shelf security components to build a file storage application
+    with pretty good security.
 </p>
+
+<h2>Shoulders We're Standing On</h2>
+<ul>
+	<li>
+		Cross-platform GUID generation:
+		<a target="_blank" href="https://github.com/graeme-hill/crossguid"
+		   >https://github.com/graeme-hill/crossguid</a>
+	</li>
+	<li>
+		SHA-256 hashing:
+		<a target="_blank" href="https://github.com/System-Glitch/SHA256"
+		   >https://github.com/System-Glitch/SHA256</a>
+	</li>
+	<li>
+		Blowfish "pretty secure" encryption:
+		<a target="_blank" href="https://www.codeproject.com/articles/1400/a-c-implementation-of-the-blowfish-encryption-decr"
+		   >https://www.codeproject.com/articles/1400/a-c-implementation-of-the-blowfish-encryption-decr</a>
+	</li>
+</ul>
 
 <h2>securelocker - pretty secure file storage</h2>
 <p>
-    The idea with securelocker is that we'd like to model a software system
-    after the real world "applications" of items stored in lockers.
-    You pay the fee, you get assigned a locker number, and you get a key to the locker,
-    you put stuff in it, maybe you give the locker number and key to somebody else,
-    or you just come back to get the stuff later.
-    Important: The locker proprietor keeps a copy of the key you got, 
-    and has a "sudo" key that can unlock any locker.  So it's pretty secure,
-    as secure as you trust the locker outfit in general, and the person you got
-    the key from in particular.
+	The idea with securelocker is that we'd like to model a software system
+	after the real world businesses that rent lockers for people to store and exchange items.
+	You pay the fee, you get a locker number and a key to the locker.
+	You put your stuff in it, lock it up,
+	then maybe you give the number and key to somebody else as an exchange,
+	or maybe you just come back later to retrieve your stuff.
+	Important: The locker company keeps a copy of the key you got.
+	So it's pretty secure: it's as secure as you trust the locker company.
 </p>
 <p>
-    So to model this in C++, I decided to write two applications.
+    To model this in C++, I decided to write two applications.
+	System operators run securelocker<u>d</u> to run the locker business, 
+	and end users operate securelocker to work with their lockers.
 </p>
 
 <h3>securelockerd</h3>
 <p>
-    securelockerd is a command line application that serves as the locker outfit,
-    and the operator of the application is the person running the business.
-    The application takes commands to register, checkin, and checkout clients.
+	securelockerd is a command line application that helps run the locker business.
+	The application takes commands to register, checkin, and checkout clients.
+	It also runs an httplite web server serving clients running securelocker as described below.
+</p>
+<p>
+    The register command is the phone call before you go to the locker business,
+    reserving a locker.  This command takes the name of the person making the
+    reservation.  The client would convey their name outside of the 
+    application, it would be out-of-band.
+</p>
+<p>
+    The checkin command finds a free locker, creates the key to the locker, 
+    and gives the room number and key to the client, again, out-of-band.
+    As you may gather, this system employs shared secret symmetric encryption.
+</p>
+<p>
+    The checkout command empties the locker 
+    and erases the record from the leger described below.
+</p>
+<p>
+    There is a leger object where all locker information is managed.
+    This leger is shared between the command processing code and the web server.
+    The leger is thread-safe.
+    The leger data is stored on disk in an encrypted file.
+    When the operator launches securelockerd, it prompts the user for the password
+    to the leger file, and loads the leger into memory.
+	All changes made to the leger write the leger file back out.
+    This is obviously not designed for thousands of lockers, but it should be adequte
+    for hundreds of lockers, sort of in line with a real locker business.
+</p>
+<p>
+    Locker contents are stored in a directory, one subdirectory per locker.
+    Each lockers contains a flat list of files, no subdirectories.
+    This made implementation much simpler and more secure.
+    If you want subdirectories, use a ZIP file.
+    If you want better security, use a password-protected ZIP file.
+    Even with password-protecting the ZIP file, if you want to exchange the file,
+    you're going to need to share the password with the other party in some way.
+</p>
+<p>
+    securelockerd needs to get the leger password from the user at program starup.
+    As the leger contents are highly sensitive, 
+    password entry cannot display the user's password on the screen.
+    To accomplish this, you #include &lt;conio.h&gt; and use a blob of code like this:
+    <br />
+    <pre>printf("Leger Access Password: ");
+std::wstring password;
+while (true)
+{
+	char c = _getch();
+	if (c == '\r' || c == '\n')
+		break;
+	password += c;
+	printf("*");
+}
+printf("\n");
+</pre>
+</p>
+<p>
+    Before receiving commands from the user, the program loads the leger,
+    and starts the web server:
+    <br />
+<pre>std::wstring lockerRootDir = argv[2];
+std::wstring legerFilePath = fs::path(lockerRootDir).append("leger.dat");
+lockerleger leger(password, legerFilePath);
+leger.load();
+
+lockerserver server
+(
+	static_cast<uint16_t>(port), 
+	leger, 
+	lockerRootDir
+);
+server.start();
+</pre>
+</p>
+<p>
+    The algorithm for finding an available room is fun, a decent interview question:
+    <br />
+    <pre>uint32_t lockerleger::getAvailableRoom() const
+{
+	// Get the sorted list of all rooms
+	std::vector&lt;uint32_t&gt; rooms;
+	for (const auto& legerentry : m_entries)
+	{
+		if (legerentry->room > 0)
+			rooms.push_back(legerentry->room);
+	}
+	std::sort(rooms.begin(), rooms.end());
+
+	// Walk the list looking for a gap in the sequence
+	uint32_t last = 0;
+	for (uint32_t cur : rooms)
+	{
+		uint32_t should = last + 1;
+		if (cur &gt; should) // past empty spot
+			return should;
+		last = cur;
+	}
+
+	// Failing that, go one after the end
+	return last + 1;
+}
+</pre>
+</p>
+
+<p>
+	The code for preventing malicious file access is pretty cute:
+	<br />
+<pre>std::wstring lockerfiles::getFilePath(const std::wstring& filename) const
+{
+	if (filename.empty())
+		throw std::runtime_error("Invalid filename: (empty)");
+	if
+	(
+		filename == L"."
+		||
+		filename.front() == ' ' 
+		|| 
+		filename.back() == ' ' 
+		|| 
+		filename.back() == '.'  
+		|| 
+		filename.find(L"..") != std::wstring::npos
+	)
+	{
+		throw std::runtime_error(("Invalid filename: " + httplite::toNarrowStr(filename)).c_str());
+	}
+
+	static std::vector&lt;char&gt; InvalidFilenameTokens
+	{
+		'\"',
+		'\\',
+		':',
+		'/',
+		'&lt;',
+		'&gt;',
+		'|',
+		'?',
+		'*',
+	};
+	for (auto invalid : InvalidFilenameTokens)
+	{
+		if (filename.find(invalid) != std::wstring::npos)
+			throw std::runtime_error(("Invalid filename: " + httplite::toNarrowStr(filename)).c_str());
+	}
+
+	for (auto c : filename)
+	{
+		if ((c &gt;= 0x0 && c &lt;= 0x1F) || c == 0x7F)
+			throw std::runtime_error(("Invalid filename: " + httplite::toNarrowStr(filename)).c_str());
+	}
+
+	return m_dirPath + filename;
+}
+</pre>
 </p>
 
 <h3>securelocker</h3>
 <p>
-    securelocker is another command line program where you can put, dir, get, and del
+    securelocker is another command line program where you can 
+    <ol>
+        <li>put</li>
+        <li>dir</li>
+        <li>get</li>
+        <li>del</li>
+    </ol>
     files in the locker.
 </p>
+<p>
+    I implemented a basic httplite wrapper class to implement these functions
+    so that the app just does command line stuff:
+    <pre>void lockerclient::put(const std::wstring& filename, const std::vector&lt;uint8_t&gt;& bytes)
+{
+	Request request;
+	request.Verb = "PUT";
+	request.Path.push_back(filename);
+	request.Payload.emplace(Encrypt(bytes, m_key));
+	doHttp(request);
+}
+	
+std::vector&lt;std::wstring&gt; lockerclient::dir()
+{
+	Request request;
+	request.Verb = "DIR"; // nonstandard, works well for us
+	request.Path.push_back(L"/");
+	Response response = doHttp(request);
+	std::wstring dirResult =
+		response.Payload.has_value() ? response.Payload-&gt;ToString() : L"";
+	return Split(dirResult, L'\n');
+}
 
+std::vector&lt;uint8_t&gt; lockerclient::get(const std::wstring& filename)
+{
+	Request request;
+	request.Verb = "GET";
+	request.Path.push_back(filename);
+	Response response = doHttp(request);
+	return Decrypt(response.Payload-&gt;Bytes, m_key);
+}
+
+void lockerclient::del(const std::wstring& filename)
+{
+	Request request;
+	request.Verb = "DELETE";
+	request.Path.push_back(filename);
+	doHttp(request);
+}
+
+Response lockerclient::doHttp(Request& request)
+{
+	Response response =
+		issueClientHttpCommand
+		(
+			m_client,
+			m_room,
+			m_key,
+			request
+		);
+	if (response.GetStatusCode() / 100 != 2)
+		throw std::runtime_error(("HTTP operation failed: " + response.Status).c_str());
+	return response;
+}
+</pre>
+<p>
+    ...but what pray tell is issueClientHttpCommand?
+    It implements the client side of a challenge-response authentication mechanism:
+	<br />
+	<pre>static Response issueClientHttpCommand
+(
+	httplite::HttpClient& client,
+	uint32_t room,
+	const std::string& key,
+	httplite::Request& request
+)
+{
+	trace(L"Client HTTP Command: " + std::to_wstring(room) + L" - " + toWideStr(request.Verb) + L" - " + request.Path[0]);
+	request.Headers["X-Room-Number"] = std::to_string(room); // we send every time, but the server only believes us once
+
+	bool gotChallenge = false;
+	bool submittedChallenge = false;
+
+	std::string challengePhrase;
+	std::string challengeNonce;
+
+	while (true) // process authentication challenges then the actual request
+	{
+		if (gotChallenge)
+		{
+			auto encryptedResponse =
+				Encrypt
+				(
+					StrToVec
+					(
+						std::to_string(room) +
+						challengePhrase +
+						challengeNonce
+					),
+					key
+				);
+			std::string challengeResponse =
+				Hash(encryptedResponse.data(), encryptedResponse.size());
+			request.Headers["X-Challenge-Response"] = challengeResponse;
+			submittedChallenge = true;
+			trace("Got challenge, response: " + challengeResponse);
+		}
+
+		trace("Issuing request...");
+		Response response = client.ProcessRequest(request);
+		trace("Response: " + response.Status);
+		uint16_t statusCode = response.GetStatusCode();
+		if (statusCode / 100 == 2)
+		{
+			// Authentication is fine, so remove the auth headers 
+			// to keep subsequent requests clean
+			request.Headers.erase("X-Room-Number");
+			request.Headers.erase("X-Challenge-Response");
+			return response;
+		}
+		else if (statusCode / 100 == 4)
+		{
+			// no double-dipping, you get one shot
+			// client expects a successful response, 
+			// so we throw instead for return response
+			if (submittedChallenge)
+				throw std::runtime_error("Access denied.");
+
+			gotChallenge = true;
+			challengePhrase = response.Headers["X-Challenge-Phrase"];
+			challengeNonce = response.Headers["X-Challenge-Nonce"];
+		}
+		else
+			throw std::runtime_error(("Unregonized Server Response: " + response.Status).c_str());
+	}
+}
+</pre>
+</p>
+
+<p>
+	The server side of authentication is sort of a mirror image.
+	I added ConnectionVariables to httplite to get slipped from 
+	the per-socket-thread's local variable into the Request object.
+	It's sort of session variables without cookies, 
+	just state persisted on the thread in the server.
+	Not scalable, but very simple.
+	<br/>
+	<pre>static std::shared_ptr&lt;Response&gt; authServerHttpRequest 
+(
+	const Request& request,
+	std::function&lt;int()&gt; nonceGen,
+	std::function&lt;std::string(uint32_t room)&gt; keyGet
+)
+{
+	// Make connection variables easier to work with
+	auto& connVars = *request.ConnectionVariables;
+
+	// Bail if the client is already authenticated
+	if (connVars.find(L"Authenticated") != connVars.end())
+	{
+		trace("Auth: Client authenticated");
+		return nullptr;
+	}
+
+	// Unpack the challenge connection vars
+	auto roomIt = connVars.find(L"RoomNumber");
+	auto challengeIt = connVars.find(L"ChallengePhrase");
+	auto nonceIt = connVars.find(L"ChallengeNonce");
+	if
+	(
+		roomIt == connVars.end()
+		||
+		challengeIt == connVars.end()
+		||
+		nonceIt == connVars.end()
+	)
+	{
+		trace("Auth: Client not challenged yet");
+
+		// Get the room number from the request and validate it
+		// NOTE: This is the only time when the room number is read from the client
+		//		 We can't allow clients to change which room they're talking about 
+		//		 later and gain access to another room's contents, password or not
+		auto roomRequestIt = request.Headers.find("X-Room-Number");
+		if (roomRequestIt == request.Headers.end())
+		{
+			trace("Auth: No room number");
+			std::shared_ptr&lt;Response&gt; response = std::make_shared&lt;Response&gt;();
+			response-&gt;Status = "403 Invalid Request";
+			return response;
+		}
+		int roomInt = atoi(roomRequestIt-&gt;second.c_str());
+		if (roomInt &lt;= 0)
+		{
+			trace("Auth: Invalid room number");
+			std::shared_ptr&lt;Response&gt; response = std::make_shared&lt;Response&gt;();
+			response-&gt;Status = "403 Invalid Request";
+			return response;
+		}
+
+		// Create the challenge
+		std::string challenge = UniqueStr();
+		std::string nonce = std::to_string(nonceGen());
+		trace("Auth: Challenge: " + challenge + " - " + nonce);
+
+		// Stash the challenge in connections vars
+		connVars[L"RoomNumber"] = std::to_wstring(roomInt);
+		connVars[L"ChallengePhrase"] = toWideStr(challenge);
+		connVars[L"ChallengeNonce"] = toWideStr(nonce);
+
+		// Return the challenge response
+		std::shared_ptr&lt;Response&gt; response = std::make_shared&lt;Response&gt;();
+		response-&gt;Status = "401 Access Denied";
+		response-&gt;Headers["X-Challenge-Phrase"] = challenge;
+		response-&gt;Headers["X-Challenge-Nonce"] = nonce;
+		return response;
+	}
+	else // we have a complete set of challenge connections vars
+	{
+		trace("Auth: Client challenged");
+
+		// Unpack the server challenge from the connection vars
+		uint32_t room = static_cast&lt;uint32_t&gt;(_wtoi(roomIt-&gt;second.c_str()));
+		std::string challengePhrase = toNarrowStr(challengeIt-&gt;second);
+		std::string challengeNonce = toNarrowStr(nonceIt-&gt;second);
+
+		// Erase the challenge connection vars to prevent clients from hammering
+		// on the same challenge until they find something that works
+		connVars.erase(roomIt);
+		connVars.erase(challengeIt);
+		connVars.erase(nonceIt);
+
+		// Get the client's response to the server challenge
+		std::string challengeClientResponse;
+		{
+			auto requestChallengeResponseIt = request.Headers.find("X-Challenge-Response");
+			if (requestChallengeResponseIt == request.Headers.end())
+			{
+				trace("Auth: Client did not respond to challenge");
+				std::shared_ptr&lt;Response&gt; response = std::make_shared&lt;Response&gt;();
+				response-&gt;Status = "401 Access Denied";
+				return response;
+			}
+			challengeClientResponse = requestChallengeResponseIt-&gt;second;
+		}
+
+		// Compute the server version of the challenge response
+		auto encryptedLocalResponse =
+			Encrypt
+			(
+				StrToVec
+				(
+					std::to_string(room) +
+					challengePhrase +
+					challengeNonce
+				),
+				keyGet(room)
+			);
+		std::string challengeLocalResponse =
+			Hash(encryptedLocalResponse.data(), encryptedLocalResponse.size());
+		if (challengeClientResponse == challengeLocalResponse) // client is granted access
+		{
+			trace("Auth: Client challenge response matches, client authenticated");
+			connVars[L"Authenticated"] = L"true";
+			connVars[L"RoomNumber"] = std::to_wstring(room);
+			return nullptr;
+		}
+		else
+		{
+			trace("Auth: Client challenge response does not match");
+			std::shared_ptr&lt;Response&gt; response = std::make_shared&lt;Response&gt;();
+			response-&gt;Status = "401 Access Denied";
+			return response;
+		}
+	}
+
+	// Unreachable
+	//return nullptr;
+}
+</pre>
+</p>
 
 <h2>Conclusion and Points of Interest</h2>
 <p>

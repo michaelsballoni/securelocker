@@ -120,7 +120,6 @@ static std::shared_ptr<Response> authServerHttpRequest
 			);
 		std::string challengeLocalResponse =
 			Hash(encryptedLocalResponse.data(), encryptedLocalResponse.size());
-		//trace("Auth: Local challenge: " + challengeLocalResponse);
 		if (challengeClientResponse == challengeLocalResponse) // client is granted access
 		{
 			trace("Auth: Client challenge response matches, client authenticated");

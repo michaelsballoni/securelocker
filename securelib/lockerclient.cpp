@@ -22,7 +22,7 @@ namespace securelib
 	)
 	{
 		trace(L"Client HTTP Command: " + std::to_wstring(room) + L" - " + toWideStr(request.Verb) + L" - " + request.Path[0]);
-		request.Headers["X-Room-Number"] = std::to_string(room);
+		request.Headers["X-Room-Number"] = std::to_string(room); // we send every time, but the server only believes us once
 
 		bool gotChallenge = false;
 		bool submittedChallenge = false;
@@ -75,8 +75,6 @@ namespace securelib
 				gotChallenge = true;
 				challengePhrase = response.Headers["X-Challenge-Phrase"];
 				challengeNonce = response.Headers["X-Challenge-Nonce"];
-				//trace("challengePhrase: " + challengePhrase);
-				//trace("challengeNonce: " + challengeNonce);
 			}
 			else
 				throw std::runtime_error(("Unregonized Server Response: " + response.Status).c_str());
@@ -116,7 +114,7 @@ namespace securelib
 	std::vector<std::wstring> lockerclient::dir()
 	{
 		Request request;
-		request.Verb = "DIR";
+		request.Verb = "DIR"; // nonstandard, works well for us
 		request.Path.push_back(L"/");
 		Response response = doHttp(request);
 		std::wstring dirResult =
