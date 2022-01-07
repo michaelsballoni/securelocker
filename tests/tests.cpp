@@ -118,5 +118,26 @@ namespace securelib
 			std::string loadedStr4 = VecToStr(LoadFile(filePath));
 			Assert::AreEqual(std::string("blet monkey"), loadedStr4);
 		}
+
+		TEST_METHOD(TestFilenames)
+		{
+			Assert::IsTrue(IsFilenameValid(L"a"));
+			Assert::IsTrue(IsFilenameValid(L"ab"));
+			Assert::IsTrue(IsFilenameValid(L"a.b"));
+			Assert::IsTrue(IsFilenameValid(L"foo.bar"));
+			Assert::IsTrue(IsFilenameValid(L".foo.bar"));
+			Assert::IsTrue(IsFilenameValid(L"blet monkey"));
+			Assert::IsTrue(IsFilenameValid(L"foo-bar-monkey.blet"));
+			Assert::IsTrue(IsFilenameValid(L"'blet monkey'.foo-bar"));
+
+			Assert::IsFalse(IsFilenameValid(L""));
+			Assert::IsFalse(IsFilenameValid(L"."));
+			Assert::IsFalse(IsFilenameValid(L"..foo.bar"));
+			Assert::IsFalse(IsFilenameValid(L"foo..bar"));
+			Assert::IsFalse(IsFilenameValid(L"c:\\foo.bar"));
+			Assert::IsFalse(IsFilenameValid(L"foo."));
+			Assert::IsFalse(IsFilenameValid(L" foo"));
+			Assert::IsFalse(IsFilenameValid(L"foo "));
+		}
 	};
 }

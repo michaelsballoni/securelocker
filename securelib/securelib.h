@@ -83,4 +83,9 @@ namespace securelib
 	/// Save a data vector into a file
 	/// </summary>
 	void SaveFile(const std::wstring& path, const std::vector<uint8_t>& bytes);
+
+	/// <summary>
+	/// Is a filename legal across modern file systems?
+	/// </summary>
+	bool IsFilenameValid(const std::wstring& filename);
 }

@@ -64,13 +64,13 @@ std::string securelib::Hash(const std::string& str)
 	return Hash(reinterpret_cast<const uint8_t*>(str.c_str()), str.size());
 }
 
-static void PadVectorTo8ths(std::vector<uint8_t>& vec)
+inline void PadVectorTo8ths(std::vector<uint8_t>& vec)
 {
 	while (vec.size() % 8)
 		vec.push_back(0);
 }
 
-uint32_t htonl(uint32_t x)
+inline uint32_t htonl(uint32_t x)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
 	uint8_t* s = (uint8_t*)&x;
@@ -80,7 +80,7 @@ uint32_t htonl(uint32_t x)
 #endif
 }
 
-uint32_t ntohl(uint32_t const net) {
+inline uint32_t ntohl(uint32_t const net) {
 #if BYTE_ORDER == LITTLE_ENDIAN
 	uint8_t data[4] = {};
 	memcpy(&data, &net, sizeof(data));
@@ -181,7 +181,7 @@ std::string securelib::VecToStr(const std::vector<unsigned char>& data)
 std::string securelib::UniqueStr()
 {
 	static std::mutex mutex;
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex); // protect rand()
 	std::stringstream stream;
 	// https://github.com/graeme-hill/crossguid
 	stream << xg::newGuid() << rand() << time(nullptr);
@@ -220,4 +220,47 @@ void securelib::SaveFile(const std::wstring& path, const std::vector<uint8_t>& b
 		file.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
 	}
 	trace("File saved");
+}
+
+bool securelib::IsFilenameValid(const std::wstring& filename)
+{
+	if (filename.empty())
+		return false;
+
+	if
+	(
+		filename == L"."
+		||
+		filename.front() == ' '
+		||
+		filename.back() == ' '
+		||
+		filename.back() == '.'
+		||
+		filename.find(L"..") != std::wstring::npos
+	)
+	{
+		return false;
+	}
+
+	for (auto c : filename)
+	{
+		if ((c >= 0x0 && c <= 0x1F) || c == 0x7F)
+			return false;
+
+		switch (static_cast<char>(c))
+		{
+		case '\"':
+		case '\\':
+		case ':':
+		case '/':
+		case '<':
+		case '>':
+		case '|':
+		case '?':
+		case '*':
+			return false;
+		}
+	}
+	return true;
 }
